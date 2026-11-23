@@ -22,3 +22,22 @@ h2{font-family:Georgia,serif;font-weight:500;font-size:24px;margin:9px 0}.panel>
 .privacy{text-align:center;font-size:11px;line-height:1.45;color:#5d5a54}.privacy span{color:#4a8462}
 footer{max-width:1280px;padding:22px 34px;margin:0 auto;border-top:1px solid #d6d0c5;font-size:11px;color:#676158;line-height:1.6}
 @media(max-width:850px){.workspace{grid-template-columns:1fr}.result{position:static}.top,main,footer{padding-left:17px;padding-right:17px}.panel{padding:20px}.result-head{font-size:9px}}
+
+
+/* Hoofdlab is part of the original Proefatelier page, never a new route. */
+.portrait-panel{border-color:#c8bfae}
+.photo-action{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.upload-button{display:inline-block;text-align:center;cursor:pointer}
+.visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+.helper{font-size:12px!important;color:#5c5954!important;line-height:1.5!important;margin:15px 0!important}
+.adjustment{display:grid;gap:8px}
+.adjustment label{font-size:12px;font-weight:600;display:flex;justify-content:space-between}
+.adjustment output{color:#8a684e}
+.adjustment input[type=range]{accent-color:#1b1b1b;width:100%;cursor:pointer;margin-bottom:5px}
+.portrait-styles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.portrait-style{border:1px solid #d3c9b9;background:#fff;border-radius:9px;padding:7px;min-width:0}
+.portrait-style.selected{outline:2px solid #1b1b1b;outline-offset:-2px;background:#f5f1e7}
+.portrait-style canvas{display:block;aspect-ratio:240/270;object-fit:contain;width:100%;height:auto;background:#fff}
+.portrait-style strong{display:block;font-size:12px;padding-top:7px}
+.portrait-style span{display:block;font-size:10px;color:#69645c;padding-top:3px}
+#portrait-controls[hidden]{display:none}
