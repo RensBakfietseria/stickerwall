@@ -130,7 +130,25 @@ function placeholderHead(ctx: CanvasRenderingContext2D) {
   ctx.restore();
 }
 
-export function drawSticker(creature: Creature, qualities: readonly Quality[]): HTMLCanvasElement {
+// A photo-derived line drawing replaces only the fictional head, never the body.
+// The neck/collar is drawn last to disguise the head-body seam.
+function portraitHead(ctx: CanvasRenderingContext2D, head: HTMLCanvasElement) {
+  ctx.drawImage(head, 163, 148, 226, 252);
+  ctx.save();
+  ctx.translate(276, 272);
+  path(ctx, (c) => {
+    c.moveTo(-32, 95); c.lineTo(-33, 122); c.quadraticCurveTo(0, 145, 33, 122);
+    c.lineTo(31, 95); c.closePath();
+  }, '#fff', 4);
+  path(ctx, (c) => {
+    c.moveTo(-48, 95); c.lineTo(-7, 139); c.lineTo(0, 120);
+    c.lineTo(10, 138); c.lineTo(49, 95); c.quadraticCurveTo(0, 116, -48, 95);
+    c.closePath();
+  }, '#fff', 4);
+  ctx.restore();
+}
+
+export function drawSticker(creature: Creature, qualities: readonly Quality[], portrait: HTMLCanvasElement | null = null): HTMLCanvasElement {
   const canvas = document.createElement('canvas');
   canvas.width = PRINT_WIDTH;
   canvas.height = PRINT_HEIGHT;
@@ -151,7 +169,8 @@ export function drawSticker(creature: Creature, qualities: readonly Quality[]): 
     case 'dragon': dragon(ctx); break;
     case 'penguin': penguin(ctx); break;
   }
-  placeholderHead(ctx);
+  if (portrait) portraitHead(ctx, portrait);
+  else placeholderHead(ctx);
   line(ctx, [76, 640, 476, 640], 2);
   const name = creatureName(creature, qualities);
   serif(ctx, name, 686, 469, 31);
