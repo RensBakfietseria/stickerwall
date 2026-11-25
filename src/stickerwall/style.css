@@ -41,3 +41,16 @@ footer{max-width:1280px;padding:22px 34px;margin:0 auto;border-top:1px solid #d6
 .portrait-style strong{display:block;font-size:12px;padding-top:7px}
 .portrait-style span{display:block;font-size:10px;color:#69645c;padding-top:3px}
 #portrait-controls[hidden]{display:none}
+
+/* Existing Hoofdlab, extended with real loopback-only comparison. */
+.local-compare{margin-top:21px;padding:17px;border:1px solid #b5ad9e;border-radius:10px;background:#f8f5ef}
+.local-compare h3{font-family:Georgia,serif;font-weight:500;font-size:20px;margin:0 0 8px}
+.local-compare>p{font-size:12px;color:#68645e;line-height:1.5}
+.local-compare .button{padding:11px 13px;border-radius:7px;font-size:12px}
+.local-candidates{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin:13px 0}
+.local-candidate{min-width:0;background:white;border:1px solid #d7cec2;padding:9px;border-radius:9px}
+.local-candidate strong{display:block;font-size:12px;min-height:30px}
+.local-candidate canvas{display:block;width:100%;height:auto;aspect-ratio:240/270;background:white;border-radius:4px}
+.local-candidate p{font-size:11px;color:#625e57;min-height:30px;overflow-wrap:anywhere}
+.local-candidate .button{width:100%;white-space:normal}
+@media(max-width:400px){.local-candidates{grid-template-columns:1fr}}
