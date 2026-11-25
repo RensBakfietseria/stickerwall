@@ -8,11 +8,6 @@ if (!(Test-Path $python)) {
 if (!(Test-Path (Join-Path $root "dist-stickerwall\stickerwall.html"))) {
   throw "De website-build ontbreekt. Voer npm run stickerwall:build uit."
 }
-# Use the downloaded, self-contained G'MIC CLI without changing Windows PATH.
-if (!$env:STICKERWALL_GMIC) {
-  $gmicFolder = Join-Path $root ".local-portrait-bin"
-  $gmicExe = Get-ChildItem $gmicFolder -Filter gmic.exe -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
-  if ($gmicExe) { $env:STICKERWALL_GMIC = $gmicExe.FullName }
-}
+Write-Host "Open http://127.0.0.1:8765/stickerwall.html in Chrome of Edge."
 Start-Process "http://127.0.0.1:8765/stickerwall.html"
 & $python "local_portrait\server.py"

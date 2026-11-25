@@ -3,7 +3,7 @@ name: Sticky Wall local portrait engines
 on:
   push:
     branches:
-      - stickerwall-0-3-local-portrait-compare
+      - stickerwall-0-4-artistic-portrait-lab
   pull_request:
     paths:
       - 'local_portrait/**'
@@ -47,6 +47,6 @@ jobs:
       - name: Install using the same one-command setup as the Windows user
         shell: pwsh
         run: powershell -ExecutionPolicy Bypass -File .\local_portrait\setup.ps1
-      - name: Real CPU inference with installed G'MIC and ONNX model
+      - name: Real CPU inference with all three installed ONNX models
         shell: pwsh
         run: '& .\.local-portrait-venv\Scripts\python.exe local_portrait\smoke_test.py'

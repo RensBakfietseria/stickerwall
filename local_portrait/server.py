@@ -77,7 +77,7 @@ class Handler(BaseHTTPRequestHandler):
             return
         route = urlsplit(self.path).path
         if route == "/api/local/status":
-            self._json(200, {"local": True, "engines": readiness()})
+            self._json(200, {"local": True, "protocol": 4, "engines": readiness()})
             return
         if route == "/":
             route = "/stickerwall.html"
@@ -125,7 +125,7 @@ class Handler(BaseHTTPRequestHandler):
             except (UnidentifiedImageError, ValueError, OSError):
                 self._json(400, {"error": "Kan de afbeelding niet openen."})
                 return
-            # Source pixels exist only in memory (except G'MIC's cleaned temp dir).
+            # Source pixels and model outputs exist only in memory.
             self._json(200, {"results": compare(source)})
         finally:
             INFERENCE_LOCK.release()
@@ -136,7 +136,7 @@ def main():
         raise SystemExit("Build ontbreekt: voer eerst npm run stickerwall:build uit.")
     server = ThreadingHTTPServer((HOST, PORT), Handler)
     print(f"Sticky Wall lokaal: http://{HOST}:{PORT}/stickerwall.html")
-    print("Alle portretten worden op dit apparaat verwerkt; geen cloud-API.")
+    print("Artistiek Portretlab 0.4: OpenSketch, Contour, Anime. Geen cloud-API.")
     try:
         server.serve_forever()
     except KeyboardInterrupt:
