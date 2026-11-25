@@ -27,7 +27,16 @@ def find_gmic() -> str | None:
     custom = os.environ.get("STICKERWALL_GMIC", "").strip().strip('"')
     if custom:
         return custom if Path(custom).is_file() else None
-    return shutil.which("gmic") or shutil.which("gmic.exe")
+    system = shutil.which("gmic") or shutil.which("gmic.exe")
+    if system:
+        return system
+    # setup.ps1 installs an isolated official CLI without changing PATH.
+    private_bin = HERE.parent / ".local-portrait-bin"
+    if private_bin.is_dir():
+        for candidate in private_bin.rglob("gmic.exe"):
+            if candidate.is_file():
+                return str(candidate)
+    return None
 
 
 def readiness() -> dict:
