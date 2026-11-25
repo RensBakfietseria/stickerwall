@@ -116,10 +116,11 @@ class Handler(BaseHTTPRequestHandler):
                 return
             try:
                 with Image.open(io.BytesIO(raw)) as image:
-                    image.load()
+                    # Check dimensions before decoding pixel data to bound memory use.
                     if image.width > 1024 or image.height > 1024 or image.width < 96 or image.height < 96:
                         self._json(400, {"error": "Afbeelding moet tussen 96 en 1024 pixels breed en hoog zijn."})
                         return
+                    image.load()
                     source = image.convert("RGB")
             except (UnidentifiedImageError, ValueError, OSError):
                 self._json(400, {"error": "Kan de afbeelding niet openen."})

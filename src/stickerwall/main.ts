@@ -1,4 +1,4 @@
-// Privacy-first sample entrypoint. No camera, photos, uploads, analytics, persistence or AI.
+// Privacy-first Proefatelier: local browser filters plus two loopback-only offline engines.
 import { printPhoto } from '../photo.ts';
 import type { PrinterBase } from '../printers/base.ts';
 import { connectPrinter } from '../printers/index.ts';

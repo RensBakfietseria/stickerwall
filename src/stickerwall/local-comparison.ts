@@ -58,15 +58,18 @@ export function mountLocalComparison(config: Config): { reset: () => void } {
   };
   let current = 0;
   let controller: AbortController | null = null;
+  let serverReady = false;
 
   function show(message: string): void { localStatus.textContent = message; }
   function reset(): void {
     ++current;
     controller?.abort();
     controller = null;
+    compareButton.disabled = !serverReady;
     for (const key of ['gmic', 'informative'] as const) {
       delete engineResults[key];
       chooseButtons[key].disabled = true;
+      chooseButtons[key].setAttribute('aria-pressed', 'false');
       const preview = required<HTMLCanvasElement>('local-preview-' + key);
       preview.getContext('2d')?.clearRect(0, 0, preview.width, preview.height);
       const msg = required<HTMLParagraphElement>('local-message-' + key);
@@ -86,12 +89,13 @@ export function mountLocalComparison(config: Config): { reset: () => void } {
         if (!response.ok) throw new Error('geen lokale server');
         return response.json() as Promise<{ engines: Record<Engine, { ready: boolean }> }>;
       })
-      .then(info => show('Lokale server bereikbaar. G’MIC: ' +
+      .then(info => { serverReady = true; compareButton.disabled = false; show('Lokale server bereikbaar. G’MIC: ' +
         (info.engines.gmic.ready ? 'klaar' : 'ontbreekt') +
         ' · Informative Drawings: ' +
         (info.engines.informative.ready ? 'klaar' : 'ontbreekt') +
-        '. Selecteer een foto en klik op vergelijken.'))
+        '. Selecteer een foto en klik op vergelijken.'); })
       .catch(() => {
+        serverReady = false;
         compareButton.disabled = true;
         show('Geen lokale AI-server gevonden. Start de Python-server op 127.0.0.1:8765; de gewone foto-filters blijven beschikbaar.');
       });
