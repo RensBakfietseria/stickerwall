@@ -18,15 +18,15 @@ powershell -ExecutionPolicy Bypass -File .\local_portrait\setup.ps1
 
 Dit maakt `.local-portrait-venv`, installeert `Pillow`, `numpy` en `onnxruntime`, downloadt eenmalig twee specifieke assets met controle op Git blob SHA, voert `npm ci` uit en bouwt de aparte Stickerwall-pagina. De model- en filterscripts blijven onder `local_portrait/assets/` en worden **niet naar GitHub gepusht**.
 
-Installeer daarnaast de **G'MIC Command Line Interface** van <https://gmic.eu/download.html>. Het moet om het programma **`gmic.exe`** gaan (de GIMP-plugin alleen is niet genoeg).
+De installer haalt ook de **officiële G'MIC 4.0.8 Windows CLI** op en controleert het bestand vóór het uitpakken. Er is dus geen losse GIMP-plugin of handmatige PATH-aanpassing nodig. De uitgepakte CLI staat in `.local-portrait-bin/` (niet in Git).
 
-Plaats `gmic.exe` in PATH of configureer in deze PowerShell-sessie het volledige pad:
+Als je al een eigen G'MIC-installatie hebt, kun je deze desgewenst expliciet instellen:
 
 ```powershell
 $env:STICKERWALL_GMIC="C:\pad\naar\gmic.exe"
 ```
 
-Vergeet niet dat de G'MIC-cli bij lokale verwerking ook de eigen programmabestanden en bibliotheken nodig kan hebben. Laat die bij het exe-bestand staan.
+Na installatie heb je voor de verwerking van portretten geen internet meer nodig.
 
 ## Elke volgende keer starten
 

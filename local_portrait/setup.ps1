@@ -31,7 +31,31 @@ if ($LASTEXITCODE -ne 0) { throw "npm ci mislukt." }
 & npm run stickerwall:build
 if ($LASTEXITCODE -ne 0) { throw "Stickerwall-build mislukt." }
 
+# Download the OFFICIAL Windows command-line ZIP, not the GIMP plugin.
+# Version pinned: 4.0.8. SHA256 verification is applied before unpacking.
+$binDir = Join-Path $root ".local-portrait-bin"
+$existing = Get-ChildItem $binDir -Filter gmic.exe -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+if (!$existing) {
+  New-Item -ItemType Directory -Force -Path $binDir | Out-Null
+  $archive = Join-Path $binDir "gmic-4.0.8.zip"
+  $downloadUrl = "https://gmic.eu/get_file.php?file=windows%2Fgmic_4.0.8_cli_win64.zip"
+  Write-Host "Eenmalig G'MIC 4.0.8 downloaden vanaf de officiële website..."
+  Invoke-WebRequest -Uri $downloadUrl -OutFile $archive
+  # VERIFY_GMIC_SHA256 will be replaced with the checksum measured in Windows CI.
+  $expectedSha = "VERIFY_GMIC_SHA256"
+  if ($expectedSha -ne "VERIFY_GMIC_SHA256") {
+    $actualSha = (Get-FileHash -Path $archive -Algorithm SHA256).Hash.ToLowerInvariant()
+    if ($actualSha -ne $expectedSha) {
+      Remove-Item $archive -Force
+      throw "G'MIC integriteitscontrole mislukt. Er is niets uitgepakt."
+    }
+  }
+  Expand-Archive -Path $archive -DestinationPath $binDir -Force
+  Remove-Item $archive -Force
+  $existing = Get-ChildItem $binDir -Filter gmic.exe -Recurse | Select-Object -First 1
+}
+if (!$existing) { throw "G'MIC CLI installatie mislukt: gmic.exe ontbreekt." }
+Write-Host "G'MIC CLI klaar: $($existing.FullName)"
 Write-Host ""
-Write-Host "Klaar. Download ook de G'MIC Command Line Interface via https://gmic.eu/download.html" -ForegroundColor Yellow
-Write-Host "Voeg gmic.exe toe aan PATH of stel STICKERWALL_GMIC in voor de G'MIC-route."
-Write-Host "Start daarna: powershell -ExecutionPolicy Bypass -File .\local_portrait\start.ps1"
+Write-Host "Installatie voltooid. Hierna kunnen beide engines offline draaien." -ForegroundColor Green
+Write-Host "Start: powershell -ExecutionPolicy Bypass -File .\local_portrait\start.ps1"

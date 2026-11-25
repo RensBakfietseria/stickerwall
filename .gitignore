@@ -14,3 +14,4 @@ events
 .local-portrait-venv/
 dist-stickerwall/
 local_portrait/assets/
+.local-portrait-bin/
