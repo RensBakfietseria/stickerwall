@@ -35,6 +35,17 @@ class ProcessingTests(unittest.TestCase):
         self.assertFalse(results["contourplus"]["ok"])
         self.assertFalse(results["u2net"]["ok"])
 
+    def test_focus_runs_only_one_u2_inference(self):
+        with patch.object(processing, "get_session", return_value=object()), \
+             patch.object(processing, "isolate", return_value=(self.image, Image.new("L", self.image.size, 255))), \
+             patch.object(processing, "u2net_image", return_value=self.image) as u2, \
+             patch.object(processing, "informative_image") as refs:
+            outputs = processing.compare(self.image, include_references=False)
+        self.assertEqual(set(outputs), {"isolated", "u2net"})
+        self.assertTrue(outputs["u2net"]["ok"])
+        u2.assert_called_once()
+        refs.assert_not_called()
+
     def test_label_mapping(self):
         self.assertEqual(head_classes(np.arange(19)).tolist(),
                          [False] + [True]*13 + [False]*3 + [True]*2)

@@ -21,7 +21,7 @@ try {
   for (let i = 0; i < 80; i++) {
     try {
       const status = await fetch(base + '/api/local/status').then(r => r.json());
-      if (status.protocol === 5) break;
+      if (status.protocol === 6) break;
     } catch {}
     if (i === 79) throw Error('local server startup failed');
     await new Promise(resolve => setTimeout(resolve, 250));
@@ -29,6 +29,7 @@ try {
   browser = await puppeteer.launch({ executablePath: chrome, headless: true });
   const page = await browser.newPage();
   let posts = 0;
+  const compareUrls = [];
   const external = [];
   const pageErrors = [];
   page.on('pageerror', e => pageErrors.push(String(e)));
@@ -36,7 +37,7 @@ try {
   page.on('request', request => {
     const url = request.url();
     if (url.startsWith(base + '/') || url.startsWith('data:') || url.startsWith('blob:')) {
-      if (request.method() === 'POST' && url.endsWith('/api/local/compare')) posts++;
+      if (request.method() === 'POST' && url.includes('/api/local/compare')) { posts++; compareUrls.push(url); }
       void request.continue();
     } else {
       external.push(url);
@@ -52,35 +53,50 @@ try {
   await page.waitForFunction(() => !document.querySelector('#portrait-controls').hidden);
   await page.$eval('#portrait-zoom', el => { el.value = '100'; el.dispatchEvent(new Event('input')); });
   await page.click('#local-compare-run');
-  await page.waitForFunction(() => ['opensketch','contour','anime','contourplus','u2net'].every(s => !document.getElementById('local-select-'+s).disabled), {timeout: 120000});
-  const styles = await page.evaluate(() => ['opensketch','contour','anime','contourplus','u2net'].map(s => document.getElementById('local-preview-'+s).toDataURL()));
-  assert.equal(new Set(styles).size, 5, 'five distinct model outputs');
-  await page.click('#local-mode-ink');
-  // Oval mask is off by default, natural head mask remains active.
-  const binary = await page.evaluate(() => ['opensketch','contour','anime','contourplus','u2net'].every(s => {
+  await page.waitForFunction(() => ['u2net','u2bold','u2sticker'].every(s => !document.getElementById('local-select-'+s).disabled), {timeout: 120000});
+  assert(await page.$eval('#local-select-u2sticker', el => el.getAttribute('aria-pressed') === 'true'));
+  const variants = await page.evaluate(() => ['u2net','u2bold','u2sticker'].map(s => document.getElementById('local-preview-'+s).toDataURL()));
+  assert.equal(new Set(variants).size, 3, 'three distinct preset outputs from one model');
+  const binary = await page.evaluate(() => ['u2net','u2bold','u2sticker'].every(s => {
     const c = document.getElementById('local-preview-'+s);
     const data = c.getContext('2d').getImageData(0,0,c.width,c.height).data;
     return c.width === 226 && c.height === 252 && data.every(v => v===0 || v===255);
   }));
-  assert(binary, 'preview is 226x252 pure black/white');
-  const natural = await page.$eval('#local-preview-contourplus', c => {
-    const d = c.getContext('2d').getImageData(0,0,c.width,c.height).data;
-    return d.some((v,i) => i%4===3 && v===0) && d.some((v,i) => i%4===3 && v===255);
+  assert(binary, 'three 226x252 binary print layers');
+  const masksMatch = await page.evaluate(() => {
+    const alpha = id => {
+      const c = document.getElementById('local-preview-'+id);
+      return Array.from(c.getContext('2d').getImageData(0,0,c.width,c.height).data).filter((_,i)=>i%4===3);
+    };
+    const a=alpha('u2net'), b=alpha('u2bold'), c=alpha('u2sticker');
+    return a.includes(0) && a.includes(255) && a.every((v,i)=>v===b[i] && v===c[i]);
   });
-  assert(natural, 'natural silhouette has transparent exterior');
-  await page.click('#local-select-contourplus');
+  assert(masksMatch, 'head alpha identical across all presets');
   const stickerBefore = await page.$eval('#sticker', el => el.toDataURL());
+  await page.click('#local-select-u2bold');
+  assert.notEqual(stickerBefore, await page.$eval('#sticker', el => el.toDataURL()));
   await page.$eval('#local-ink-thickness', el => { el.value = '2'; el.dispatchEvent(new Event('input')); });
-  const stickerAfter = await page.$eval('#sticker', el => el.toDataURL());
-  assert.notEqual(stickerBefore, stickerAfter, 'ink finishing updates selected sticker');
-  assert.equal(posts, 1, 'ink finishing does not rerun inference');
+  assert.equal(posts, 1, 'preset selection and finishing do not rerun inference');
+  assert.equal(compareUrls[0], base+'/api/local/compare');
+  await page.click('#local-reset-finish');
+  assert.deepEqual(await page.evaluate(() => ['u2net','u2bold','u2sticker'].map(s => document.getElementById('local-preview-'+s).toDataURL())),variants);
+  await page.click('#local-mode-raw');
+  assert.equal(await page.$eval('#local-preview-u2net',el=>el.width),512);
+  assert.equal(await page.$eval('#local-preview-u2bold',el=>el.width),226);
+  await page.click('#local-mode-ink');
+  await page.click('#local-include-references');
+  await page.click('#local-compare-run');
+  await page.waitForFunction(() => ['contour','contourplus','opensketch','anime','u2sticker'].every(s => !document.getElementById('local-select-'+s).disabled), {timeout: 120000});
+  assert.equal(posts,2);
+  assert.equal(compareUrls[1],base+'/api/local/compare?references=1');
+  await page.click('#local-select-contourplus');
   await page.click('#remove-photo');
   assert(await page.$eval('#portrait-controls', el => el.hidden));
   assert(await page.$eval('#local-select-contour', el => el.disabled));
   assert.equal(await page.$eval('#local-original', c => c.getContext('2d').getImageData(0,0,c.width,c.height).data.some(x=>x!==0)), false);
   assert.deepEqual(external, [], 'no outbound browser requests');
   assert.deepEqual(pageErrors, [], 'no browser runtime errors');
-  console.log('PASS: five local drawing previews, natural alpha, black/white finishing, selection, clear photo, no outbound requests.');
+  console.log('PASS: three U2 presets, shared alpha, default focus, optional references, reset, local sticker selection, no outbound requests.');
 } finally {
   if (browser) await browser.close();
   server.kill();

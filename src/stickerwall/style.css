@@ -66,3 +66,14 @@ footer{max-width:1280px;padding:22px 34px;margin:0 auto;border-top:1px solid #d6
 .local-model-label{display:block;font-size:10px;color:#625e57;min-height:30px;margin-top:3px}
 .local-candidate canvas{image-rendering:auto;aspect-ratio:8/9}
 .local-finish .helper{margin-bottom:0!important}
+
+/* Build 0.6: keep the three print variants together; optional references below. */
+.u2-candidates{grid-template-columns:repeat(3,minmax(0,1fr))}
+.u2-candidates .local-candidate:has(button[aria-pressed=true]){border-color:#1b1b1b;box-shadow:0 0 0 1px #1b1b1b}
+.u2-candidates .local-model-label{min-height:42px;line-height:1.35}
+.u2-candidates .local-candidate p{min-height:38px}
+.local-reference-details{border-top:1px solid #d7cec2;padding:12px 0 0;font-size:12px}
+.local-reference-details summary{cursor:pointer;font-weight:600;line-height:1.5}
+#local-reset-finish{margin-top:8px}
+@media(max-width:650px){.u2-candidates{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:400px){.u2-candidates{grid-template-columns:1fr}}

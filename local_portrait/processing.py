@@ -1,4 +1,4 @@
-"""Cartoonlab 0.5: original drawings, BiSeNet head isolation, U2-Net Portrait.
+"""Cartoonlab 0.6: U2-Net first, optional original reference models.
 
 Only local CPU inference. One active ONNX session at a time.
 No image files, subprocesses, network calls or facial identification.
@@ -108,8 +108,8 @@ def result(worker):
         return {"ok": False, "error": str(exc)}
 
 
-def compare(source):
-    outputs = {style: result(lambda s=style: informative_drawings(source, s)) for style in STYLES[:3]}
+def compare(source, include_references=True):
+    outputs = {style: result(lambda s=style: informative_drawings(source, s)) for style in STYLES[:3]} if include_references else {}
     begin = time.perf_counter()
     try:
         isolated, mask = isolate(source, get_session("bisenet"))
@@ -117,8 +117,9 @@ def compare(source):
                                "elapsed_ms": round((time.perf_counter() - begin) * 1000)}
     except Exception as exc:
         error = {"ok": False, "error": str(exc)}
-        outputs.update({key: dict(error) for key in ("isolated", "contourplus", "u2net")})
+        outputs.update({key: dict(error) for key in (("isolated", "contourplus", "u2net") if include_references else ("isolated", "u2net"))})
         return outputs
-    outputs["contourplus"] = result(lambda: _encode_png(apply_silhouette(informative_image(isolated, "contour"), mask)))
+    if include_references:
+        outputs["contourplus"] = result(lambda: _encode_png(apply_silhouette(informative_image(isolated, "contour"), mask)))
     outputs["u2net"] = result(lambda: _encode_png(apply_silhouette(u2net_image(isolated), mask)))
     return outputs

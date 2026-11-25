@@ -11,13 +11,13 @@
   <body>
     <header class="top">
       <div class="wordmark">STICKERWALL<span class="dot">.</span></div>
-      <div class="tag">PROEFATELIER <strong>0.5</strong></div>
+      <div class="tag">PROEFATELIER <strong>0.6</strong></div>
     </header>
     <main>
       <section class="intro">
         <p class="eyebrow">EEN KLEIN EXPERIMENT IN GROTE COMPLIMENTEN</p>
         <h1>Geef iemands kwaliteiten <em>een gezicht.</em></h1>
-        <p>Vergelijk het oorspronkelijke Contour-model met Contour+ en U²-Net Portrait. Het Cartoonlab probeert het hoofd los te maken van achtergrond en kleding.</p>
+        <p>Eén lokaal getekend hoofd, drie grafische afwerkingen. Ontdek welke U²-stijl het beste bij jouw sticker past.</p>
       </section>
       <div class="workspace">
         <div class="controls">
@@ -62,69 +62,88 @@
                 <button type="button" class="portrait-style" data-portrait-style="hybrid" aria-pressed="false"><canvas id="hybrid-preview" width="240" height="270" aria-hidden="true"></canvas><strong>Illustratief</strong><span>Lijnen en schaduw</span></button>
               </div>
               <div class="local-compare" aria-labelledby="local-compare-title">
-                <div class="step">03B / CARTOONLAB</div>
-                <h3 id="local-compare-title">Van foto naar een getekend hoofd</h3>
-                <p>Dezelfde foto, vijf lokale tekenvarianten. Contour+ en U²-Net Portrait gebruiken eerst BiSeNet om alleen het hoofd te behouden. Vergelijk ze met Contour, OpenSketch en Anime.</p>
-                <button class="button dark" id="local-compare-run" type="button" disabled>Vergelijk vijf tekenvarianten</button>
+                <div class="step">03B / U² FOCUS</div>
+                <h3 id="local-compare-title">Van lijntekening naar stickerhoofd</h3>
+                <p>U²-Net is onze voorkeursroute. Vergelijk drie afwerkingen van dezelfde tekening op de werkelijke afdrukresolutie van het hoofd. Geen extra AI-modellen nodig.</p>
+                <button class="button dark" id="local-compare-run" type="button" disabled>Maak drie U²-afwerkingen</button>
                 <p class="status" id="local-compare-status" role="status">Lokale engines worden gecontroleerd…</p>
+                <label class="local-mask"><input id="local-include-references" type="checkbox" /> Ook Contour, Contour+, OpenSketch en Anime berekenen</label>
                 <div class="local-finish">
                   <div class="local-modes" role="group" aria-label="Weergave">
-                    <button class="button light" type="button" id="local-mode-raw" aria-pressed="true">Model / natuurlijke contour</button>
-                    <button class="button light" type="button" id="local-mode-ink" aria-pressed="false">Zwart-witdruk</button>
+                    <button class="button light" type="button" id="local-mode-ink" aria-pressed="true">Zwart-witdruk</button>
+                    <button class="button light" type="button" id="local-mode-raw" aria-pressed="false">Modeluitvoer</button>
                   </div>
-                  <label class="local-mask"><input id="local-oval-mask" type="checkbox" /> Ovaalmasker (alleen oude stijlen)</label>
                   <div class="adjustment">
-                    <label for="local-ink-cutoff">Zwart-witdrempel <output id="local-cutoff-value">180</output></label>
+                    <label for="local-ink-cutoff">Meer / minder inkt <output id="local-cutoff-value">180</output></label>
                     <input id="local-ink-cutoff" type="range" min="90" max="245" value="180" step="5" />
-                    <label for="local-ink-thickness">Inktlijnen dikker <output id="local-thickness-value">0</output></label>
+                    <label for="local-ink-thickness">Extra lijndikte <output id="local-thickness-value">0</output></label>
                     <input id="local-ink-thickness" type="range" min="0" max="2" value="0" step="1" />
                   </div>
-                  <p class="helper">Hogere drempel maakt meer lijnen zwart. Deze afwerking verandert het AI-model niet en werkt zonder opnieuw vergelijken. Contour+ en U²-Net houden hun eigen natuurlijke hoofdcontour, onafhankelijk van het ovaalmasker.</p>
+                  <button class="button light" type="button" id="local-reset-finish">Herstel standaardafwerking</button>
+                  <p class="helper">De drie afwerkingen hebben elk hun eigen instelling; deze schuiven passen ze gezamenlijk aan. Bij Modeluitvoer toont Basis de onbewerkte U²-tekening met de natuurlijke contour; Bold en Sticker blijven afdrukvoorbeelden.</p>
                 </div>
-                <div class="local-candidates">
+                <div class="local-candidates u2-candidates">
                   <div class="local-candidate">
-                    <strong>Originele uitsnede</strong><span class="local-model-label">Gelijke invoer voor alle modellen</span>
-                    <canvas id="local-original" width="512" height="576" aria-label="Originele portretuitsnede"></canvas>
-                    <p>Geen filter of masker</p>
-                  </div>
-                  <div class="local-candidate">
-                    <strong>Geïsoleerd hoofd</strong><span class="local-model-label">BiSeNet · zonder kleding en achtergrond</span>
-                    <canvas id="local-isolated" width="512" height="576" aria-label="Geïsoleerd hoofd"></canvas>
-                    <p id="local-isolated-message">Nog niet getest</p>
-                  </div>
-                  <div class="local-candidate">
-                    <strong>Contour</strong><span class="local-model-label">Referentie uit 0.4</span>
-                    <canvas id="local-preview-contour" width="512" height="576" aria-label="Contour resultaat"></canvas>
-                    <p id="local-message-contour">Nog niet getest</p>
-                    <button type="button" class="button light" id="local-select-contour" aria-pressed="false" disabled>Gebruik op sticker</button>
-                  </div>
-                  <div class="local-candidate">
-                    <strong>Contour+</strong><span class="local-model-label">Contour + BiSeNet + natuurlijke lijn</span>
-                    <canvas id="local-preview-contourplus" width="512" height="576" aria-label="Contour+ resultaat"></canvas>
-                    <p id="local-message-contourplus">Nog niet getest</p>
-                    <button type="button" class="button light" id="local-select-contourplus" aria-pressed="false" disabled>Gebruik op sticker</button>
-                  </div>
-                  <div class="local-candidate">
-                    <strong>U²-Net Portrait</strong><span class="local-model-label">Portretmodel + natuurlijke hoofdcontour</span>
-                    <canvas id="local-preview-u2net" width="512" height="576" aria-label="U²-Net Portrait resultaat"></canvas>
+                    <strong>U² Basis</strong><span class="local-model-label">De zwart-witafwerking van Build 0.5</span>
+                    <canvas id="local-preview-u2net" width="226" height="252" aria-label="U² Basis resultaat"></canvas>
                     <p id="local-message-u2net">Nog niet getest</p>
                     <button type="button" class="button light" id="local-select-u2net" aria-pressed="false" disabled>Gebruik op sticker</button>
                   </div>
                   <div class="local-candidate">
+                    <strong>U² Bold</strong><span class="local-model-label">Krachtigere lijnen en meer zwart</span>
+                    <canvas id="local-preview-u2bold" width="226" height="252" aria-label="U² Bold resultaat"></canvas>
+                    <p id="local-message-u2bold">Nog niet getest</p>
+                    <button type="button" class="button light" id="local-select-u2bold" aria-pressed="false" disabled>Gebruik op sticker</button>
+                  </div>
+                  <div class="local-candidate">
+                    <strong>U² Sticker</strong><span class="local-model-label">Proefvoorkeur · selectieve lijnversterking</span>
+                    <canvas id="local-preview-u2sticker" width="226" height="252" aria-label="U² Sticker resultaat"></canvas>
+                    <p id="local-message-u2sticker">Nog niet getest</p>
+                    <button type="button" class="button light" id="local-select-u2sticker" aria-pressed="false" disabled>Gebruik op sticker</button>
+                  </div>
+                </div>
+                <details class="local-reference-details" id="local-reference-details">
+                  <summary>Originele foto, hoofdsegmentatie en oude referenties</summary>
+                  <label class="local-mask"><input id="local-oval-mask" type="checkbox" /> Ovaalmasker (alleen Contour, OpenSketch en Anime)</label>
+                  <div class="local-candidates">
+                    <div class="local-candidate">
+                      <strong>Originele uitsnede</strong><span class="local-model-label">De invoer voor alle modellen</span>
+                      <canvas id="local-original" width="512" height="576" aria-label="Originele portretuitsnede"></canvas>
+                      <p>Geen filter of masker</p>
+                    </div>
+                    <div class="local-candidate">
+                      <strong>Geïsoleerd hoofd</strong><span class="local-model-label">BiSeNet · zonder kleding en achtergrond</span>
+                      <canvas id="local-isolated" width="512" height="576" aria-label="Geïsoleerd hoofd"></canvas>
+                      <p id="local-isolated-message">Nog niet getest</p>
+                    </div>
+                  <div class="local-candidate">
+                    <strong>Contour</strong><span class="local-model-label">Referentie uit 0.4</span>
+                    <canvas id="local-preview-contour" width="226" height="252" aria-label="Contour resultaat"></canvas>
+                    <p id="local-message-contour">Nog niet getest</p>
+                    <button type="button" class="button light" id="local-select-contour" aria-pressed="false" disabled>Gebruik op sticker</button>
+                  </div>
+                  <div class="local-candidate">
+                    <strong>Contour+</strong><span class="local-model-label">Contour met natuurlijke hoofdvorm</span>
+                    <canvas id="local-preview-contourplus" width="226" height="252" aria-label="Contour+ resultaat"></canvas>
+                    <p id="local-message-contourplus">Nog niet getest</p>
+                    <button type="button" class="button light" id="local-select-contourplus" aria-pressed="false" disabled>Gebruik op sticker</button>
+                  </div>
+                  <div class="local-candidate">
                     <strong>OpenSketch</strong><span class="local-model-label">Oude schetsreferentie</span>
-                    <canvas id="local-preview-opensketch" width="512" height="576" aria-label="OpenSketch resultaat"></canvas>
+                    <canvas id="local-preview-opensketch" width="226" height="252" aria-label="OpenSketch resultaat"></canvas>
                     <p id="local-message-opensketch">Nog niet getest</p>
                     <button type="button" class="button light" id="local-select-opensketch" aria-pressed="false" disabled>Gebruik op sticker</button>
                   </div>
                   <div class="local-candidate">
                     <strong>Anime</strong><span class="local-model-label">Oude anime-referentie</span>
-                    <canvas id="local-preview-anime" width="512" height="576" aria-label="Anime resultaat"></canvas>
+                    <canvas id="local-preview-anime" width="226" height="252" aria-label="Anime resultaat"></canvas>
                     <p id="local-message-anime">Nog niet getest</p>
                     <button type="button" class="button light" id="local-select-anime" aria-pressed="false" disabled>Gebruik op sticker</button>
                   </div>
-                </div>
-                <p class="footnote">De sticker gebruikt altijd de zwart-witafwerking. De headlaag is 226 × 252 printerpunten binnen de bestaande 552-punts sticker. APDrawingGAN++ blijft een onderzoeksspoor; geen gesimuleerde APDrawingGAN-uitvoer. De natuurlijke contour is een afwerking bovenop de echte modeluitvoer.</p>
-                <p class="footnote">Alleen de verkleinde uitsnede gaat naar de server op 127.0.0.1. Geen externe AI, uitvoerbare G’MIC of opslag van portretfoto’s.</p>
+                  </div>
+                </details>
+                <p class="footnote">De drie U²-afwerkingen behouden dezelfde hoofdvorm en gebruiken 226 × 252 punten binnen de bestaande 552-punts sticker. Sticker versterkt alleen bestaande donkere lijnen en haalt kleine losse spikkels weg; het tekent geen nieuwe gelaatstrekken. APDrawingGAN en extra modellen blijven buiten deze build.</p>
+                <p class="footnote">Alleen de verkleinde uitsnede gaat naar de server op 127.0.0.1. Geen externe AI of opslag van portretfoto’s.</p>
               </div>
             </div>
             <p class="footnote">Na verwijderen of herladen bewaart het Proefatelier geen foto. Bij lokaal vergelijken gaat de uitsnede uitsluitend naar 127.0.0.1; geen cloud-AI.</p>

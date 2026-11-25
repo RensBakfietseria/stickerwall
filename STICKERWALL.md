@@ -1,11 +1,13 @@
-# Stickerwall 0.5 — Cartoonlab
+# Stickerwall 0.6 — U² Focus
 
-Bestaande Proefatelier, zelfde dieren en printerformaat. Vijf tekenvarianten:
-Contour als referentie, Contour+ met BiSeNet-hoofdsegmentatie, U²-Net Portrait
-met dezelfde voorbewerking, plus OpenSketch en Anime uit 0.4.
+Drie afwerkingen van één U²-Net Portrait-modeluitvoer, met de natuurlijke
+hoofdvorm uit Build 0.5. Basis, Bold en Sticker zijn vergelijkbaar op
+226 × 252 punten, en selecteerbaar voor hetzelfde dierenlichaam.
 
-Natuurlijke hoofdcontour, transparante buitenzijde, zichtbare geïsoleerde
-uitsnede en bestaande zwart-witafwerking. Alle modellen op lokale CPU.
-APDrawingGAN++ nog niet geïntegreerd. Geen externe portretverwerking.
+Standaard alleen U²-Net en BiSeNet; Contour, Contour+, Anime en OpenSketch
+optioneel. Geen nieuwe modellen, geen cloud, geen wijziging van de
+printerbreedte. Detailinjectie geparkeerd. Sticker is de proefvoorkeur;
+artistieke kwaliteit moet nog op echte, lokale foto's worden beoordeeld.
 
-[Update en technische details](local_portrait/README.md).
+Update: stop de lokale server, voer `./update.cmd` uit en start opnieuw.
+Zie [lokale instructies](local_portrait/README.md).

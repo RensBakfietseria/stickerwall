@@ -1,6 +1,10 @@
-# Stickerwall 0.5 — Cartoonlab
+# Stickerwall 0.6 — U² Focus
 
 Vijf tekenvarianten: Contour, Contour+ (BiSeNet + Contour), U²-Net Portrait (met BiSeNet), OpenSketch en Anime. Alle verwerking lokaal op CPU. Geen G'MIC of PyTorch. APDrawingGAN++ blijft onderzocht, niet actief.
+
+## Build 0.6
+
+Eén U²-Net-inferentie geeft drie grafische afwerkingen: Basis (de 0.5-afdruk), Bold (hogere drempel en één pixel verdikking), Sticker (selectieve lokale contrastversterking, zwakke randpixels naast inkt behouden, losse zwarte componenten kleiner dan drie pixels verwijderen). De drie afwerkingen worden in de browser op 226 × 252 punten gemaakt en behouden exact hetzelfde hoofdmasker. De voorkeursproef is Sticker; dit is een ontwerpkeuze, geen bewezen kwaliteitswinnaar. Basis kan ook de oorspronkelijke U²-modeluitvoer met natuurlijke contour tonen. De algemene drempel en lijndikte zijn relatieve aanpassingen; de resetknop herstelt 180/0. De oude modellen blijven optioneel via het selectievak. Geen nieuwe modelbestanden of pakketten. Detailinjectie uit andere modellen is geparkeerd: eerst de drie gecontroleerde afwerkingen vergelijken.
 
 ## Toekomstige updates
 
@@ -57,9 +61,9 @@ G'MIC, PyTorch of andere portretsoftware. Na installatie kan internet uit.
 
 - Kies een onbewerkte portretfoto. De originele uitsnede (512 x 576) staat
   naast de drie resultaten. Zoom en verschuif totdat het hoofd goed staat.
-- Klik 'Vergelijk vijf tekenvarianten'. De drie oude stijlen en de twee nieuwe tekenroutes worden lokaal sequentieel verwerkt. Het geïsoleerde hoofd laat de BiSeNet-voorbewerking zien.
+- Klik 'Maak drie U²-afwerkingen'. Vink desgewenst de oude referenties aan. De hoofdsegmentatie en U² draaien eenmaal per aanvraag; de afwerkingen draaien in de browser. Het geïsoleerde hoofd laat de BiSeNet-voorbewerking zien.
   Er is maximaal één model-sessie tegelijk.
-- Bekijk de tekening met 'Model / natuurlijke contour'. De oude stijlen kunnen een ovaalmasker krijgen. Contour+ en U²-Net krijgen altijd het natuurlijke hoofdmasker en een expliciete buitenlijn.
+- Bekijk de tekening met 'Modeluitvoer'. De oude stijlen kunnen een ovaalmasker krijgen. Contour+ en U²-Net krijgen altijd het natuurlijke hoofdmasker en een expliciete buitenlijn.
 - 'Zwart-witdruk' toont een echte tweekleurige versie. Drempel en lijndikte
   werken direct in de browser, zonder opnieuw inferentie.
 - 'Gebruik op sticker' plaatst altijd de zwart-witlaag op het gekozen
@@ -76,7 +80,7 @@ op 127.0.0.1:8765. De server verwerkt pixels in geheugen; er zijn geen
 uitgaande API-aanroepen, tijdelijke portretbestanden of fotogalerij.
 De server bewaart geen requestlog. De browser heeft een restrictief CSP en
 weigert redirects voor modelrequests. De portretvergelijking werkt alleen
-met protocolversie 5 op de lokale server, niet op een externe Vercel-host.
+met protocolversie 6 op de lokale server, niet op een externe Vercel-host.
 Dit is ontwerp en technische test, geen volledige privacy- of securityaudit.
 Gebruik een eigen onbewerkte foto om de artistieke kwaliteit te beoordelen.
 
