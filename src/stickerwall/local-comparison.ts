@@ -1,17 +1,24 @@
 import { thresholdInk } from './ink.ts';
+import { finishU2, type U2Finish } from './u2-finish.ts';
 import { type Crop, makePortraitInput } from './portrait.ts';
 
-const STYLES = ['contour', 'contourplus', 'u2net', 'opensketch', 'anime'] as const;
+const MODELS = ['u2net', 'contour', 'contourplus', 'opensketch', 'anime'] as const;
+type Model = (typeof MODELS)[number];
+const STYLES = ['u2net', 'u2bold', 'u2sticker', 'contour', 'contourplus', 'opensketch', 'anime'] as const;
 type Style = (typeof STYLES)[number];
+const PRESETS: Partial<Record<Style, U2Finish>> = { u2net: 'basis', u2bold: 'bold', u2sticker: 'sticker' };
+const modelFor = (style: Style): Model => PRESETS[style] ? 'u2net' : style as Model;
 const LABELS: Record<Style, string> = {
   opensketch: 'OpenSketch',
   contour: 'Contour',
   contourplus: 'Contour+',
-  u2net: 'U²-Net Portrait',
+  u2net: 'U² Basis',
+  u2bold: 'U² Bold',
+  u2sticker: 'U² Sticker',
   anime: 'Anime',
 };
 type BackendResult = { ok: boolean; png?: string; error?: string; elapsed_ms?: number };
-type ComparisonResponse = { results: Record<Style | 'isolated', BackendResult> };
+type ComparisonResponse = { results: Partial<Record<Model | 'isolated', BackendResult>> };
 type Config = {
   getImage: () => ImageBitmap | null;
   getCrop: () => Crop;
@@ -46,7 +53,7 @@ function fromPng(base64: string): Promise<HTMLImageElement> {
 /** Preserve raw output for judging style, or create a pure black/white print layer.
  * Print layer dimensions match artwork.ts (226 x 252 printer dots).
  */
-function frameResult(image: HTMLImageElement, print: boolean, mask: boolean, cutoff: number, thickness: number, natural = false): HTMLCanvasElement {
+function frameResult(image: HTMLImageElement, print: boolean, mask: boolean, cutoff: number, thickness: number, natural = false, preset?: U2Finish): HTMLCanvasElement {
   const canvas = document.createElement('canvas');
   canvas.width = print ? 226 : image.naturalWidth;
   canvas.height = print ? 252 : image.naturalHeight;
@@ -62,8 +69,8 @@ function frameResult(image: HTMLImageElement, print: boolean, mask: boolean, cut
   ctx.drawImage(image, 0, 0, w, h);
   if (print) {
     const pixels = ctx.getImageData(0, 0, w, h);
-    const ink = thresholdInk(pixels.data, w, h, cutoff, thickness);
-    if (natural) {
+    const ink = preset ? finishU2(pixels.data, w, h, preset, cutoff, thickness) : thresholdInk(pixels.data, w, h, cutoff, thickness);
+    if (natural && !preset) {
       // Keep the semantic head silhouette instead of a rectangular white box.
       for (let i = 3; i < ink.length; i += 4) ink[i] = pixels.data[i] >= 128 ? 255 : 0;
     }
@@ -101,7 +108,9 @@ export function mountLocalComparison(config: Config): {
   const original = required<HTMLCanvasElement>('local-original');
   const isolated = required<HTMLCanvasElement>('local-isolated');
   const isolatedMessage = required<HTMLParagraphElement>('local-isolated-message');
-  const natural = (style: Style) => style === 'contourplus' || style === 'u2net';
+  const natural = (style: Style) => style === 'contourplus' || Boolean(PRESETS[style]);
+  const references = required<HTMLInputElement>('local-include-references');
+  const referenceDetails = required<HTMLDetailsElement>('local-reference-details');
   const cutoffInput = required<HTMLInputElement>('local-ink-cutoff');
   const thicknessInput = required<HTMLInputElement>('local-ink-thickness');
   const maskInput = required<HTMLInputElement>('local-oval-mask');
@@ -110,9 +119,9 @@ export function mountLocalComparison(config: Config): {
   const chooseButtons = Object.fromEntries(STYLES.map((s) => [s, required<HTMLButtonElement>(`local-select-${s}`)])) as Record<Style, HTMLButtonElement>;
   const previews = Object.fromEntries(STYLES.map((s) => [s, required<HTMLCanvasElement>(`local-preview-${s}`)])) as Record<Style, HTMLCanvasElement>;
   const messages = Object.fromEntries(STYLES.map((s) => [s, required<HTMLParagraphElement>(`local-message-${s}`)])) as Record<Style, HTMLParagraphElement>;
-  const rawResults: Partial<Record<Style, HTMLImageElement>> = {};
+  const rawResults: Partial<Record<Model, HTMLImageElement>> = {};
   let selected: Style | null = null;
-  let mode: 'raw' | 'ink' = 'raw';
+  let mode: 'raw' | 'ink' = 'ink';
   let current = 0;
   let controller: AbortController | null = null;
   let serverReady = false;
@@ -127,8 +136,8 @@ export function mountLocalComparison(config: Config): {
   }
 
   function renderSelected(): void {
-    const image = selected ? rawResults[selected] : undefined;
-    config.onSelect(image ? frameResult(image, true, maskInput.checked, Number(cutoffInput.value), Number(thicknessInput.value), selected !== null && natural(selected)) : null);
+    const image = selected ? rawResults[modelFor(selected)] : undefined;
+    config.onSelect(image && selected ? frameResult(image, true, maskInput.checked, Number(cutoffInput.value), Number(thicknessInput.value), natural(selected), PRESETS[selected]) : null);
   }
 
   function deselect(): void {
@@ -143,8 +152,8 @@ export function mountLocalComparison(config: Config): {
     rawButton.setAttribute('aria-pressed', String(mode === 'raw'));
     inkButton.setAttribute('aria-pressed', String(mode === 'ink'));
     for (const style of STYLES) {
-      const image = rawResults[style];
-      if (image) paint(previews[style], frameResult(image, mode === 'ink', maskInput.checked, Number(cutoffInput.value), Number(thicknessInput.value), natural(style)));
+      const image = rawResults[modelFor(style)];
+      if (image) paint(previews[style], frameResult(image, mode === 'ink' || style === 'u2bold' || style === 'u2sticker', maskInput.checked, Number(cutoffInput.value), Number(thicknessInput.value), natural(style), PRESETS[style]));
     }
     if (selected) renderSelected();
   }
@@ -155,7 +164,7 @@ export function mountLocalComparison(config: Config): {
     controller = null;
     compareButton.disabled = !serverReady;
     for (const style of STYLES) {
-      delete rawResults[style];
+      delete rawResults[modelFor(style)];
       chooseButtons[style].disabled = true;
       paint(previews[style], null);
       messages[style].textContent = 'Nog niet getest';
@@ -164,7 +173,8 @@ export function mountLocalComparison(config: Config): {
     isolatedMessage.textContent = 'Nog niet getest';
     deselect();
     updateOriginal();
-    if (serverReady) show('Kies Vergelijk om deze uitsnede met alle vijf tekenvarianten te verwerken.');
+    references.disabled = false;
+    if (serverReady) show('Kies Vergelijk om de drie U²-afwerkingen te maken.');
   }
 
   compareButton.disabled = true;
@@ -174,16 +184,16 @@ export function mountLocalComparison(config: Config): {
     void fetch('/api/local/status', { cache: 'no-store', redirect: 'error' })
       .then(async (response) => {
         if (!response.ok) throw new Error('Geen lokale server.');
-        return response.json() as Promise<{ protocol: number; local: boolean; engines: Record<Style, { ready: boolean }> }>;
+        return response.json() as Promise<{ protocol: number; local: boolean; engines: Record<Model, { ready: boolean }> }>;
       })
       .then((info) => {
-        if (info.protocol !== 5 || !info.local) throw new Error('Start eerst de 0.5-server.');
+        if (info.protocol !== 6 || !info.local) throw new Error('Start eerst de 0.6-server.');
         serverReady = true;
         compareButton.disabled = false;
-        show(`Lokale 0.5-server · ${STYLES.filter((s) => info.engines?.[s]?.ready).length}/5 tekenvarianten beschikbaar.`);
+        show(info.engines?.u2net?.ready ? 'Lokale 0.6-server · U²-Net en hoofdsegmentatie klaar.' : 'Lokale 0.6-server · U²-model of hoofdsegmentatie ontbreekt. Voer setup uit.');
       })
       .catch(() => {
-        show('Geen lokale 0.5-server gevonden. Sluit de oude versie en start de nieuwe versie.');
+        show('Geen lokale 0.6-server gevonden. Sluit de oude versie en start de nieuwe versie.');
       });
   }
 
@@ -195,13 +205,16 @@ export function mountLocalComparison(config: Config): {
     const turn = ++current;
     controller = new AbortController();
     compareButton.disabled = true;
-    show('Hoofdsegmentatie en vijf tekenvarianten worden lokaal verwerkt…');
+    const includeReferences = references.checked;
+    references.disabled = true;
+    if (includeReferences) referenceDetails.open = true;
+    show(includeReferences ? 'U²-Net en oude referentiemodellen worden lokaal verwerkt…' : 'Hoofdsegmentatie en één U²-Net-inferentie worden lokaal verwerkt…');
     try {
       const cropped = makePortraitInput(image, config.getCrop());
       paint(original, cropped);
       const png = await toBlob(cropped);
       if (turn !== current) return;
-      const response = await fetch('/api/local/compare', {
+      const response = await fetch(includeReferences ? '/api/local/compare?references=1' : '/api/local/compare', {
         method: 'POST',
         headers: { 'Content-Type': 'image/png' },
         body: png,
@@ -229,31 +242,43 @@ export function mountLocalComparison(config: Config): {
         isolatedMessage.textContent = head?.error || 'Hoofdsegmentatie niet beschikbaar.';
       }
       let ok = 0;
-      for (const style of STYLES) {
-        const result = data.results?.[style];
+      for (const model of MODELS) {
+        const result = data.results?.[model];
+        const variants = STYLES.filter((style) => modelFor(style) === model);
         if (!result?.ok || !result.png) {
-          messages[style].textContent = result?.error || 'Geen uitvoer ontvangen.';
+          for (const style of variants) messages[style].textContent = result?.error || (model === 'u2net' || includeReferences ? 'Geen uitvoer ontvangen.' : 'Niet meegerekend; vink referenties aan.');
           continue;
         }
         try {
           const drawing = await fromPng(result.png);
           if (turn !== current) return;
-          rawResults[style] = drawing;
-          chooseButtons[style].disabled = false;
-          messages[style].textContent = `${result.elapsed_ms ?? '?'} ms · ${natural(style) ? 'natuurlijke hoofdcontour' : 'originele modeluitvoer'}`;
+          rawResults[model] = drawing;
+          for (const style of variants) {
+            chooseButtons[style].disabled = false;
+            messages[style].textContent = model === 'u2net'
+              ? style === 'u2net' ? (result.elapsed_ms ?? '?') + ' ms · één U²-modeluitvoer' : 'Zelfde U²-uitvoer · lokale afwerking'
+              : (result.elapsed_ms ?? '?') + ' ms · referentie';
+          }
           ++ok;
         } catch {
-          messages[style].textContent = 'Kon de modeluitvoer niet openen.';
+          for (const style of variants) messages[style].textContent = 'Kon de modeluitvoer niet openen.';
         }
       }
+      if (rawResults.u2net) {
+        selected = 'u2sticker';
+        for (const style of STYLES) chooseButtons[style].setAttribute('aria-pressed', String(style === selected));
+      }
       renderPreviews();
-      show(`${ok}/5 tekenvarianten klaar. Wissel tussen originele lijnen en zwart-witdruk; kies een resultaat voor de sticker.`);
+      show(rawResults.u2net
+        ? 'Drie U²-afwerkingen klaar. Sticker staat als proefkeuze op het wezen.' + (includeReferences ? ' ' + (ok - 1) + '/4 referenties klaar.' : '')
+        : 'U²-Net is niet gelukt; bekijk de foutmeldingen. Beschikbare referenties blijven kiesbaar.');
     } catch (error) {
       if (turn !== current) return;
       show(`Vergelijken mislukt: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       if (turn === current) {
         compareButton.disabled = !serverReady;
+        references.disabled = false;
         controller = null;
       }
     }
@@ -261,13 +286,19 @@ export function mountLocalComparison(config: Config): {
 
   for (const style of STYLES) {
     chooseButtons[style].addEventListener('click', () => {
-      if (!rawResults[style]) return;
+      if (!rawResults[modelFor(style)]) return;
       selected = style;
       for (const other of STYLES) chooseButtons[other].setAttribute('aria-pressed', String(style === other));
       renderSelected();
       show(`${LABELS[style]} staat in zwart-wit op de sticker. Pas de afwerking aan zonder opnieuw AI te draaien.`);
     });
   }
+  required<HTMLButtonElement>('local-reset-finish').addEventListener('click', () => {
+    cutoffInput.value = '180';
+    thicknessInput.value = '0';
+    mode = 'ink';
+    renderPreviews();
+  });
   rawButton.addEventListener('click', () => { mode = 'raw'; renderPreviews(); });
   inkButton.addEventListener('click', () => { mode = 'ink'; renderPreviews(); });
   maskInput.addEventListener('change', renderPreviews);
