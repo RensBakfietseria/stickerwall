@@ -41,14 +41,12 @@ if (!$existing) {
   $downloadUrl = "https://gmic.eu/get_file.php?file=windows%2Fgmic_4.0.8_cli_win64.zip"
   Write-Host "Eenmalig G'MIC 4.0.8 downloaden vanaf de officiële website..."
   Invoke-WebRequest -Uri $downloadUrl -OutFile $archive
-  # VERIFY_GMIC_SHA256 will be replaced with the checksum measured in Windows CI.
-  $expectedSha = "VERIFY_GMIC_SHA256"
-  if ($expectedSha -ne "VERIFY_GMIC_SHA256") {
-    $actualSha = (Get-FileHash -Path $archive -Algorithm SHA256).Hash.ToLowerInvariant()
-    if ($actualSha -ne $expectedSha) {
-      Remove-Item $archive -Force
-      throw "G'MIC integriteitscontrole mislukt. Er is niets uitgepakt."
-    }
+  # SHA-256 of the official 4.0.8 Windows CLI archive, measured on CI.
+  $expectedSha = "61df2eaad3b53e35897e91c11f4a837dfa52c312ede37f78f6b2fac4d86e5ebe"
+  $actualSha = (Get-FileHash -Path $archive -Algorithm SHA256).Hash.ToLowerInvariant()
+  if ($actualSha -ne $expectedSha) {
+    Remove-Item $archive -Force
+    throw "G'MIC integriteitscontrole mislukt. Er is niets uitgepakt."
   }
   Expand-Archive -Path $archive -DestinationPath $binDir -Force
   Remove-Item $archive -Force
