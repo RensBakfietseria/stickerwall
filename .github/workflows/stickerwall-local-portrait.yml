@@ -36,8 +36,6 @@ jobs:
 
   engine-smoke:
     runs-on: windows-latest
-    env:
-      STICKERWALL_MEASURE_HASH: '1'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

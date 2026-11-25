@@ -40,7 +40,7 @@ ASSET_LIST = (
     (
         "u2net_portrait.onnx",
         "https://github.com/cocoa-xu/U-2-Net/releases/download/onnx-20230530/u2net_portrait.onnx",
-        "DEVELOPMENT_HASH_PENDING",
+        "sha256:c82cb4ac797e4a2de23643b6cc7fc83aa0d4f03a9673b7cea09d2f4f623e82ca",
         176033758,
     ),
 )
@@ -55,13 +55,6 @@ def verified(data, expected, size):
         return False
     if expected.startswith("sha256:"):
         return hashlib.sha256(data).hexdigest() == expected[7:]
-    if expected == "DEVELOPMENT_HASH_PENDING":
-        # Only the initial development CI may measure the original release hash.
-        import os
-        if os.environ.get("STICKERWALL_MEASURE_HASH") == "1" and os.environ.get("CI") == "true":
-            print("U2NET_RELEASE_SHA256=" + hashlib.sha256(data).hexdigest(), flush=True)
-            return True
-        return False
     return git_blob_sha(data) == expected
 
 
