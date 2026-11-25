@@ -32,6 +32,7 @@ jobs:
       - run: npm ci
       - run: npm run stickerwall:build
       - run: npm run typecheck
+      - run: npx vitest run test/stickerwall.test.ts test/stickerwall-ink.test.ts
 
   engine-smoke:
     runs-on: windows-latest
@@ -50,3 +51,9 @@ jobs:
       - name: Real CPU inference with all three installed ONNX models
         shell: pwsh
         run: '& .\.local-portrait-venv\Scripts\python.exe local_portrait\smoke_test.py'
+
+      - name: Real browser test of three local model results and print finishing
+        run: node local_portrait/browser_smoke.mjs
+      - name: Verify setup is reusable
+        shell: pwsh
+        run: powershell -ExecutionPolicy Bypass -File .\local_portrait\setup.ps1

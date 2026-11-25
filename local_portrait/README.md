@@ -1,69 +1,81 @@
-# Sticky Wall — lokale portretvergelijking (Build 0.3)
+# Stickerwall 0.4 — Artistiek Portretlab
 
-Dit is een **uitbreiding van de bestaande Proefatelier-pagina**, geen tweede site. Het toont op dezelfde onbewerkte portretfoto de resultaten van:
+Drie bestaande Informative Drawings ONNX-modellen (OpenSketch, Contour, Anime).
+Alle verwerking vindt op de eigen CPU plaats. G'MIC is geparkeerd na de
+Windows Smart App Control-blokkade. APDrawingGAN is nog geen actieve engine.
 
-- **G'MIC Line Art**: de originele `cl_lineart`-filter van Claude Lion.
-- **Informative Drawings**: een bestaand voorgetraind model, via ONNX Runtime **CPU**.
-- De bestaande drie lichte browserfilters blijven beschikbaar als referentie.
+## Bestaande Windows-installatie 0.3 bijwerken (aanbevolen)
 
-**Geen cloudportretten.** De lokale browser gebruikt alleen `http://127.0.0.1:8765/stickerwall.html`. Alleen wanneer de gebruiker expliciet op "Vergelijk" klikt, wordt een **512×576 uitsnede als PNG naar dezelfde lokale computer** verstuurd. Het ONNX-model draait in lokaal geheugen. G'MIC gebruikt tijdelijk een input/output-PNG in de besturingssysteemtempmap; die map wordt direct na verwerking verwijderd. Er is geen gallery, cloud-AI, API-key, fotolog of persistente opslag. De code blokkeert gebruik van de AI-vergelijking op een publiek gehoste pagina. De webserver is uitsluitend op loopback gebonden, controleert Origin/Host en accepteert alleen een beperkt PNG-formaat.
-
-## Eenmalig installeren (Windows)
-
-Nodig: **Python 3.11/3.12** (bij voorkeur 3.11) en **Node.js 22 of nieuwer**. Open PowerShell in deze Stickerwall-repository:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\local_portrait\setup.ps1
-```
-
-Dit maakt `.local-portrait-venv`, installeert `Pillow`, `numpy` en `onnxruntime`, downloadt eenmalig twee specifieke assets met controle op Git blob SHA, voert `npm ci` uit en bouwt de aparte Stickerwall-pagina. De model- en filterscripts blijven onder `local_portrait/assets/` en worden **niet naar GitHub gepusht**.
-
-De installer haalt ook de **officiële G'MIC 4.0.8 Windows CLI** op en controleert het bestand vóór het uitpakken. Er is dus geen losse GIMP-plugin of handmatige PATH-aanpassing nodig. De uitgepakte CLI staat in `.local-portrait-bin/` (niet in Git).
-
-Als je al een eigen G'MIC-installatie hebt, kun je deze desgewenst expliciet instellen:
+1. Stop de lokale server in PowerShell met Ctrl+C.
+2. Download deze ontwikkelbranch als ZIP en pak hem uit. Installeer **niet**
+   vanuit de nieuw uitgepakte map.
+3. Open PowerShell in de uitgepakte 0.4-map. Voer uit:
 
 ```powershell
-$env:STICKERWALL_GMIC="C:\pad\naar\gmic.exe"
+powershell -ExecutionPolicy Bypass -File .\local_portrait\update-from-03.ps1 -TargetRoot "C:\stickerwall-stickerwall-0-3-local-portrait-compare"
 ```
 
-Na installatie heb je voor de verwerking van portretten geen internet meer nodig.
+Pas het doelpad alleen aan als jouw huidige 0.3-map ergens anders staat.
+De updater kopieert een beperkte lijst bronbestanden en voert setup uit in de
+**bestaande map**. De geïnstalleerde Python-omgeving, node_modules en
+OpenSketch-gewichten blijven behouden. Setup downloadt alleen de twee nieuwe
+modellen (samen ongeveer 35,9 MB), of herstelt ontbrekende bestanden.
 
-## Elke volgende keer starten
+Open daarna PowerShell in de bestaande doelmap en start:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\local_portrait\start.ps1
 ```
 
-Open: <http://127.0.0.1:8765/stickerwall.html> (Chrome of Edge).
+Open in Chrome/Edge http://127.0.0.1:8765/stickerwall.html . Vernieuw indien
+nodig met Ctrl+F5 en controleer het versienummer 0.4.
 
-1. Kies een **onbewerkte** portretfoto, bij voorkeur van voren met rustige achtergrond.
-2. Verschuif/vergroot het hoofd zoals eerder in het Hoofdlab.
-3. Klik **Vergelijk G'MIC en Informative Drawings**.
-4. Bekijk de **echte** resultaten naast elkaar. Kies een van beide met **Gebruik op sticker** om dezelfde tekening op axolotl, draak of pinguïn te zien.
-5. Verandert de uitsnede of de foto, dan vervalt de eerder gemaakte vergelijking en kun je opnieuw testen.
+## Nieuwe installatie
 
-**Eén route niet beschikbaar?** De fout wordt zichtbaar in de betreffende kolom. Er wordt niet stilletjes teruggevallen op een ander filter.
+Python 3.11 en Node.js 22+ zijn vereist. Gebruik een korte mapnaam direct op
+C: (bijvoorbeeld C:\Stickerwall), om Windows-padlengteproblemen te voorkomen.
 
-## Offline/veiligheid controleren
+```powershell
+powershell -ExecutionPolicy Bypass -File .\local_portrait\setup.ps1
+powershell -ExecutionPolicy Bypass -File .\local_portrait\start.ps1
+```
 
-1. Voltooi eenmalig de downloads en installatie als je internet hebt.
-2. Schakel wifi én kabelinternet uit.
-3. Start het Proefatelier op `127.0.0.1` en vergelijk een echte foto.
-4. Controleer of geen bestanden achterblijven in `local_portrait/assets/` behalve de installatiebestanden. De temp-PNG's van G'MIC moeten na iedere taak verdwenen zijn.
-5. De lokale server logt geen afbeeldingen, bestandsnamen of requestinhoud. Controleer voor een publieke installatie ook netwerkactiviteit, OS-tempbestanden en Windows crash-rapportage met een onafhankelijke audit.
+Setup downloadt de drie vastgepinde modellen van Kazuhito00's ONNX-conversie
+met controle van Git blob-hash en bestandsgrootte. Geen installatie van
+G'MIC, PyTorch of andere portretsoftware. Na installatie kan internet uit.
 
-De publieke Vercel-kijkdemo laadt alleen frontendcode; de extra AI-vergelijkingsknop staat daar **uit**. Test geen echte foto's via onbeheerde publieke servers.
+## Kwaliteitstest
 
-## Afhankelijkheden en licenties
+- Kies een onbewerkte portretfoto. De originele uitsnede (512 x 576) staat
+  naast de drie resultaten. Zoom en verschuif totdat het hoofd goed staat.
+- Klik 'Vergelijk de drie AI-stijlen'. De drie bestaande gewichten worden
+  sequentieel met dezelfde RGB-uitsnede en ONNX Runtime CPU verwerkt.
+  Er is maximaal één model-sessie tegelijk.
+- Bekijk de ruwe uitvoer met 'Origineel model'. Schakel het ovaalmasker uit
+  om de volledige hoofdcontour te zien.
+- 'Zwart-witdruk' toont een echte tweekleurige versie. Drempel en lijndikte
+  werken direct in de browser, zonder opnieuw inferentie.
+- 'Gebruik op sticker' plaatst altijd de zwart-witlaag op het gekozen
+  dierenlichaam (226 x 252 printerpunten binnen de bestaande 552-punts
+  compositie). Het ovaalmasker werkt ook op die laag.
+- De oude browserfilters blijven behouden. G'MIC wordt in 0.4 niet gestart.
+- Het wijzigen van de foto of uitsnede wist oude resultaten. De knop
+  'Verwijder foto' verwijdert portretdata uit de actieve sessie.
 
-- G'MIC command-line: <https://gmic.eu/>. Claude Lion `cl_lineart`, <https://github.com/GreycLab/gmic-community/blob/master/include/claude_lion.gmic>; bron vermeldt CeCILL/CeCILL-C. Commerciële distributie van G'MIC en bundeling van de filter vragen een aparte licentiebeoordeling.
-- Informative Drawings: <https://github.com/carolineec/informative-drawings>, onderzoeksproject en MIT-broncode. Deze build gebruikt de vooraf geconverteerde `opensketch_style_512x512.onnx` van <https://github.com/Kazuhito00/Informative-Drawings-ONNX-Sample>; controleer rechten van **modelgewichten**, eventuele derde-partijdata en afhankelijkheden voordat de installatie commercieel verspreid wordt.
-- De downloadcode pint beide downloads op een specifieke publieke commit en controleert de exacte Git blob SHA; zie `download_assets.py`.
-- Origin- en payloadbeperkingen verlagen risico's, maar vormen geen volledige beveiligings- of AVG-audit.
+## Privacy en beperkingen
 
-## Validatie en beperkingen
+De browser stuurt uitsluitend de gekozen uitsnede naar de lokale HTTP-server
+op 127.0.0.1:8765. De server verwerkt pixels in geheugen; er zijn geen
+uitgaande API-aanroepen, tijdelijke portretbestanden of fotogalerij.
+De server bewaart geen requestlog. De browser heeft een restrictief CSP en
+weigert redirects voor modelrequests. De portretvergelijking werkt alleen
+met protocolversie 4 op de lokale server, niet op een externe Vercel-host.
+Dit is ontwerp en technische test, geen volledige privacy- of securityaudit.
+Gebruik een eigen onbewerkte foto om de artistieke kwaliteit te beoordelen.
 
-- Automatische lokale tests: `python -m unittest discover -s local_portrait -p "test_*.py"`
-- Vite-build: `npm run stickerwall:build`
-- Echte model-inferentie, G'MIC-versiecompatibiliteit, gebruiksduur en afdruk moeten nog **op jouw Windows-laptop** worden gecontroleerd.
-- De uitsnede is nog handmatig; de bestaande ovaalmaskering blijft. Er is geen automatische haarvrijstelling of gezichtslandmarks. Dit is juist een objectieve eerste kwaliteitsvergelijking, geen definitieve installatie.
+Modelbron: [Informative Drawings](https://github.com/carolineec/informative-drawings)
+en [ONNX-conversie](https://github.com/Kazuhito00/Informative-Drawings-ONNX-Sample).
+De oorspronkelijke code en de conversie hebben een open-sourcelicentie;
+controleer afzonderlijk de rechten op gewichten/trainingsdata vóór verspreiding
+of commercieel gebruik. Zie [APDRAWINGGAN.md](APDRAWINGGAN.md) voor de
+onderzochte vervolgrichting en waarom die nog niet actief is.
