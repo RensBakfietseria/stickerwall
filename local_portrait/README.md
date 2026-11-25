@@ -1,8 +1,6 @@
-# Stickerwall 0.4 — Artistiek Portretlab
+# Stickerwall 0.5 — Cartoonlab
 
-Drie bestaande Informative Drawings ONNX-modellen (OpenSketch, Contour, Anime).
-Alle verwerking vindt op de eigen CPU plaats. G'MIC is geparkeerd na de
-Windows Smart App Control-blokkade. APDrawingGAN is nog geen actieve engine.
+Vijf tekenvarianten: Contour, Contour+ (BiSeNet + Contour), U²-Net Portrait (met BiSeNet), OpenSketch en Anime. Alle verwerking lokaal op CPU. Geen G'MIC of PyTorch. APDrawingGAN++ blijft onderzocht, niet actief.
 
 ## Toekomstige updates
 
@@ -52,19 +50,16 @@ powershell -ExecutionPolicy Bypass -File .\local_portrait\setup.ps1
 powershell -ExecutionPolicy Bypass -File .\local_portrait\start.ps1
 ```
 
-Setup downloadt de drie vastgepinde modellen van Kazuhito00's ONNX-conversie
-met controle van Git blob-hash en bestandsgrootte. Geen installatie van
+Setup hergebruikt de drie vastgepinde Informative Drawings-modellen en downloadt eenmalig BiSeNet ResNet18 (53 MB) en U²-Net Portrait (176 MB). De releases worden gecontroleerd op bestandsgrootte en hash. Geen installatie van
 G'MIC, PyTorch of andere portretsoftware. Na installatie kan internet uit.
 
 ## Kwaliteitstest
 
 - Kies een onbewerkte portretfoto. De originele uitsnede (512 x 576) staat
   naast de drie resultaten. Zoom en verschuif totdat het hoofd goed staat.
-- Klik 'Vergelijk de drie AI-stijlen'. De drie bestaande gewichten worden
-  sequentieel met dezelfde RGB-uitsnede en ONNX Runtime CPU verwerkt.
+- Klik 'Vergelijk vijf tekenvarianten'. De drie oude stijlen en de twee nieuwe tekenroutes worden lokaal sequentieel verwerkt. Het geïsoleerde hoofd laat de BiSeNet-voorbewerking zien.
   Er is maximaal één model-sessie tegelijk.
-- Bekijk de ruwe uitvoer met 'Origineel model'. Schakel het ovaalmasker uit
-  om de volledige hoofdcontour te zien.
+- Bekijk de tekening met 'Model / natuurlijke contour'. De oude stijlen kunnen een ovaalmasker krijgen. Contour+ en U²-Net krijgen altijd het natuurlijke hoofdmasker en een expliciete buitenlijn.
 - 'Zwart-witdruk' toont een echte tweekleurige versie. Drempel en lijndikte
   werken direct in de browser, zonder opnieuw inferentie.
 - 'Gebruik op sticker' plaatst altijd de zwart-witlaag op het gekozen
@@ -81,7 +76,7 @@ op 127.0.0.1:8765. De server verwerkt pixels in geheugen; er zijn geen
 uitgaande API-aanroepen, tijdelijke portretbestanden of fotogalerij.
 De server bewaart geen requestlog. De browser heeft een restrictief CSP en
 weigert redirects voor modelrequests. De portretvergelijking werkt alleen
-met protocolversie 4 op de lokale server, niet op een externe Vercel-host.
+met protocolversie 5 op de lokale server, niet op een externe Vercel-host.
 Dit is ontwerp en technische test, geen volledige privacy- of securityaudit.
 Gebruik een eigen onbewerkte foto om de artistieke kwaliteit te beoordelen.
 
@@ -91,3 +86,11 @@ De oorspronkelijke code en de conversie hebben een open-sourcelicentie;
 controleer afzonderlijk de rechten op gewichten/trainingsdata vóór verspreiding
 of commercieel gebruik. Zie [APDRAWINGGAN.md](APDRAWINGGAN.md) voor de
 onderzochte vervolgrichting en waarom die nog niet actief is.
+
+## Nieuwe modelbronnen en grenzen (0.5)
+
+- BiSeNet ResNet18: https://github.com/yakhyo/face-parsing (MIT-code, CelebAMask-HQ-data). Exacte release-hash gecontroleerd. Klassen 1–13 en 17–18 behouden; achtergrond, hals en kleding uitgesloten. Grootste verbonden hoofdregio, kleine gaten gesloten; geen herkennings/identiteitsmodel.
+- U²-Net Portrait: https://github.com/xuebinqin/U-2-Net ; bestaande PyTorch-naar-ONNX-export https://github.com/cocoa-xu/U-2-Net/releases/tag/onnx-20230530 . Gebruik de eerste uitgang, inversie en min-max normalisatie zoals de oorspronkelijke portrettest. Dit model is niet het algemene U²-Net achtergrondmodel.
+- Beide nieuwe routes krijgen een witte achtergrond vóór inferentie en een transparante natuurlijke hoofdvorm na inferentie. Een gecontroleerde binnenrand wordt toegevoegd; dus geen zuivere ongefilterde modeluitvoer. Dit is een kwaliteitsproef, geen gegarandeerd perfect haar- of brillenmasker. Handmatig kadreren blijft nodig.
+- CelebAMask-HQ en APDrawing-trainingsdata hebben mogelijke niet-commerciële beperkingen. Deze build is uitsluitend bedoeld voor interne kwaliteitsproeven; controleer gewichten en datalicenties vóór commerciële inzet of verspreiding.
+- APDrawingGAN++ is niet opgenomen: checkpoint, preprocess en Windows CPU nog niet gevalideerd. Zie APDRAWINGGAN.md. Geen andere engine wordt als APDrawingGAN gepresenteerd.

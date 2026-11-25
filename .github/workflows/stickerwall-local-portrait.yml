@@ -58,7 +58,9 @@ jobs:
         shell: pwsh
         run: '& .\.local-portrait-venv\Scripts\python.exe local_portrait\smoke_test.py "$env:RUNNER_TEMP\stickerwall-public-face.jpg"'
 
-      # Browser smoke is updated with the 0.5 UI in the next commit.
+      - name: Real browser test of Cartoonlab on public upstream fixture
+        shell: pwsh
+        run: node local_portrait/browser_smoke.mjs "$env:RUNNER_TEMP\stickerwall-public-face.jpg"
       - name: Verify setup is reusable
         shell: pwsh
         run: powershell -ExecutionPolicy Bypass -File .\local_portrait\setup.ps1

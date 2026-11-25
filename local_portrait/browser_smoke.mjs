@@ -1,4 +1,4 @@
-// Real browser/API test with a synthetic canvas; never use private portraits.
+// Real browser/API test on public upstream fixture; never use private portraits.
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
@@ -21,7 +21,7 @@ try {
   for (let i = 0; i < 80; i++) {
     try {
       const status = await fetch(base + '/api/local/status').then(r => r.json());
-      if (status.protocol === 4) break;
+      if (status.protocol === 5) break;
     } catch {}
     if (i === 79) throw Error('local server startup failed');
     await new Promise(resolve => setTimeout(resolve, 250));
@@ -45,37 +45,30 @@ try {
   });
   await page.goto(base + '/stickerwall.html', { waitUntil: 'networkidle0' });
   await page.waitForFunction(() => !document.querySelector('#local-compare-run').disabled);
-  await page.evaluate(async () => {
-    const c = document.createElement('canvas');
-    c.width = 512; c.height = 576;
-    const ctx = c.getContext('2d');
-    ctx.fillStyle = '#e5ddd1'; ctx.fillRect(0,0,512,576);
-    ctx.fillStyle = '#f2e4d8';
-    ctx.strokeStyle = '#222'; ctx.lineWidth = 12;
-    ctx.beginPath(); ctx.ellipse(256,250,142,201,0,0,Math.PI*2); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = '#222'; ctx.fillRect(183,200,30,18); ctx.fillRect(299,200,30,18);
-    ctx.beginPath(); ctx.arc(256,330,55,0,Math.PI); ctx.stroke();
-    const blob = await new Promise(resolve => c.toBlob(resolve, 'image/png'));
-    const transfer = new DataTransfer();
-    transfer.items.add(new File([blob], 'synthetic.png', {type: 'image/png'}));
-    const input = document.querySelector('#portrait-file');
-    input.files = transfer.files;
-    input.dispatchEvent(new Event('change'));
-  });
+  const fixture = process.argv[2];
+  assert(fixture && existsSync(fixture), 'public fixture missing');
+  const upload = await page.$('#portrait-file');
+  await upload.uploadFile(fixture);
   await page.waitForFunction(() => !document.querySelector('#portrait-controls').hidden);
+  await page.$eval('#portrait-zoom', el => { el.value = '100'; el.dispatchEvent(new Event('input')); });
   await page.click('#local-compare-run');
-  await page.waitForFunction(() => ['opensketch','contour','anime'].every(s => !document.getElementById('local-select-'+s).disabled), {timeout: 120000});
-  const styles = await page.evaluate(() => ['opensketch','contour','anime'].map(s => document.getElementById('local-preview-'+s).toDataURL()));
-  assert.equal(new Set(styles).size, 3, 'three distinct model outputs');
+  await page.waitForFunction(() => ['opensketch','contour','anime','contourplus','u2net'].every(s => !document.getElementById('local-select-'+s).disabled), {timeout: 120000});
+  const styles = await page.evaluate(() => ['opensketch','contour','anime','contourplus','u2net'].map(s => document.getElementById('local-preview-'+s).toDataURL()));
+  assert.equal(new Set(styles).size, 5, 'five distinct model outputs');
   await page.click('#local-mode-ink');
-  await page.click('#local-oval-mask'); // disable mask
-  const binary = await page.evaluate(() => ['opensketch','contour','anime'].every(s => {
+  // Oval mask is off by default, natural head mask remains active.
+  const binary = await page.evaluate(() => ['opensketch','contour','anime','contourplus','u2net'].every(s => {
     const c = document.getElementById('local-preview-'+s);
     const data = c.getContext('2d').getImageData(0,0,c.width,c.height).data;
-    return c.width === 226 && c.height === 252 && data.every((v,i) => i%4===3 ? v===255 : v===0 || v===255);
+    return c.width === 226 && c.height === 252 && data.every(v => v===0 || v===255);
   }));
   assert(binary, 'preview is 226x252 pure black/white');
-  await page.click('#local-select-contour');
+  const natural = await page.$eval('#local-preview-contourplus', c => {
+    const d = c.getContext('2d').getImageData(0,0,c.width,c.height).data;
+    return d.some((v,i) => i%4===3 && v===0) && d.some((v,i) => i%4===3 && v===255);
+  });
+  assert(natural, 'natural silhouette has transparent exterior');
+  await page.click('#local-select-contourplus');
   const stickerBefore = await page.$eval('#sticker', el => el.toDataURL());
   await page.$eval('#local-ink-thickness', el => { el.value = '2'; el.dispatchEvent(new Event('input')); });
   const stickerAfter = await page.$eval('#sticker', el => el.toDataURL());
@@ -87,7 +80,7 @@ try {
   assert.equal(await page.$eval('#local-original', c => c.getContext('2d').getImageData(0,0,c.width,c.height).data.some(x=>x!==0)), false);
   assert.deepEqual(external, [], 'no outbound browser requests');
   assert.deepEqual(pageErrors, [], 'no browser runtime errors');
-  console.log('PASS: three local model previews, black/white finishing, selection, clear photo, no outbound requests.');
+  console.log('PASS: five local drawing previews, natural alpha, black/white finishing, selection, clear photo, no outbound requests.');
 } finally {
   if (browser) await browser.close();
   server.kill();

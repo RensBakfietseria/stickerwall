@@ -1,15 +1,17 @@
 import { thresholdInk } from './ink.ts';
 import { type Crop, makePortraitInput } from './portrait.ts';
 
-const STYLES = ['opensketch', 'contour', 'anime'] as const;
+const STYLES = ['contour', 'contourplus', 'u2net', 'opensketch', 'anime'] as const;
 type Style = (typeof STYLES)[number];
 const LABELS: Record<Style, string> = {
   opensketch: 'OpenSketch',
   contour: 'Contour',
+  contourplus: 'Contour+',
+  u2net: 'U²-Net Portrait',
   anime: 'Anime',
 };
 type BackendResult = { ok: boolean; png?: string; error?: string; elapsed_ms?: number };
-type ComparisonResponse = { results: Record<Style, BackendResult> };
+type ComparisonResponse = { results: Record<Style | 'isolated', BackendResult> };
 type Config = {
   getImage: () => ImageBitmap | null;
   getCrop: () => Crop;
@@ -44,7 +46,7 @@ function fromPng(base64: string): Promise<HTMLImageElement> {
 /** Preserve raw output for judging style, or create a pure black/white print layer.
  * Print layer dimensions match artwork.ts (226 x 252 printer dots).
  */
-function frameResult(image: HTMLImageElement, print: boolean, mask: boolean, cutoff: number, thickness: number): HTMLCanvasElement {
+function frameResult(image: HTMLImageElement, print: boolean, mask: boolean, cutoff: number, thickness: number, natural = false): HTMLCanvasElement {
   const canvas = document.createElement('canvas');
   canvas.width = print ? 226 : image.naturalWidth;
   canvas.height = print ? 252 : image.naturalHeight;
@@ -52,16 +54,23 @@ function frameResult(image: HTMLImageElement, print: boolean, mask: boolean, cut
   if (!ctx) throw new Error('Canvas 2D ontbreekt.');
   const w = canvas.width;
   const h = canvas.height;
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(0, 0, w, h);
+  if (!natural) {
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, w, h);
+  }
   ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(image, 0, 0, w, h);
   if (print) {
     const pixels = ctx.getImageData(0, 0, w, h);
-    pixels.data.set(thresholdInk(pixels.data, w, h, cutoff, thickness));
+    const ink = thresholdInk(pixels.data, w, h, cutoff, thickness);
+    if (natural) {
+      // Keep the semantic head silhouette instead of a rectangular white box.
+      for (let i = 3; i < ink.length; i += 4) ink[i] = pixels.data[i] >= 128 ? 255 : 0;
+    }
+    pixels.data.set(ink);
     ctx.putImageData(pixels, 0, 0);
   }
-  if (mask) {
+  if (mask && !natural) {
     ctx.globalCompositeOperation = 'destination-in';
     ctx.fillStyle = '#000';
     ctx.beginPath();
@@ -90,6 +99,9 @@ export function mountLocalComparison(config: Config): {
   const compareButton = required<HTMLButtonElement>('local-compare-run');
   const status = required<HTMLParagraphElement>('local-compare-status');
   const original = required<HTMLCanvasElement>('local-original');
+  const isolated = required<HTMLCanvasElement>('local-isolated');
+  const isolatedMessage = required<HTMLParagraphElement>('local-isolated-message');
+  const natural = (style: Style) => style === 'contourplus' || style === 'u2net';
   const cutoffInput = required<HTMLInputElement>('local-ink-cutoff');
   const thicknessInput = required<HTMLInputElement>('local-ink-thickness');
   const maskInput = required<HTMLInputElement>('local-oval-mask');
@@ -116,7 +128,7 @@ export function mountLocalComparison(config: Config): {
 
   function renderSelected(): void {
     const image = selected ? rawResults[selected] : undefined;
-    config.onSelect(image ? frameResult(image, true, maskInput.checked, Number(cutoffInput.value), Number(thicknessInput.value)) : null);
+    config.onSelect(image ? frameResult(image, true, maskInput.checked, Number(cutoffInput.value), Number(thicknessInput.value), selected !== null && natural(selected)) : null);
   }
 
   function deselect(): void {
@@ -132,7 +144,7 @@ export function mountLocalComparison(config: Config): {
     inkButton.setAttribute('aria-pressed', String(mode === 'ink'));
     for (const style of STYLES) {
       const image = rawResults[style];
-      if (image) paint(previews[style], frameResult(image, mode === 'ink', maskInput.checked, Number(cutoffInput.value), Number(thicknessInput.value)));
+      if (image) paint(previews[style], frameResult(image, mode === 'ink', maskInput.checked, Number(cutoffInput.value), Number(thicknessInput.value), natural(style)));
     }
     if (selected) renderSelected();
   }
@@ -148,9 +160,11 @@ export function mountLocalComparison(config: Config): {
       paint(previews[style], null);
       messages[style].textContent = 'Nog niet getest';
     }
+    paint(isolated, null);
+    isolatedMessage.textContent = 'Nog niet getest';
     deselect();
     updateOriginal();
-    if (serverReady) show('Kies Vergelijk om deze uitsnede met alle drie de modellen te verwerken.');
+    if (serverReady) show('Kies Vergelijk om deze uitsnede met alle vijf tekenvarianten te verwerken.');
   }
 
   compareButton.disabled = true;
@@ -163,13 +177,13 @@ export function mountLocalComparison(config: Config): {
         return response.json() as Promise<{ protocol: number; local: boolean; engines: Record<Style, { ready: boolean }> }>;
       })
       .then((info) => {
-        if (info.protocol !== 4 || !info.local) throw new Error('Start eerst de 0.4-server.');
+        if (info.protocol !== 5 || !info.local) throw new Error('Start eerst de 0.5-server.');
         serverReady = true;
         compareButton.disabled = false;
-        show(`Lokale 0.4-server · ${STYLES.filter((s) => info.engines?.[s]?.ready).length}/3 modellen gevonden.`);
+        show(`Lokale 0.5-server · ${STYLES.filter((s) => info.engines?.[s]?.ready).length}/5 tekenvarianten beschikbaar.`);
       })
       .catch(() => {
-        show('Geen lokale 0.4-server gevonden. Sluit versie 0.3 en start de nieuwe versie.');
+        show('Geen lokale 0.5-server gevonden. Sluit de oude versie en start de nieuwe versie.');
       });
   }
 
@@ -181,7 +195,7 @@ export function mountLocalComparison(config: Config): {
     const turn = ++current;
     controller = new AbortController();
     compareButton.disabled = true;
-    show('Drie modellen verwerken dezelfde uitsnede lokaal op de CPU…');
+    show('Hoofdsegmentatie en vijf tekenvarianten worden lokaal verwerkt…');
     try {
       const cropped = makePortraitInput(image, config.getCrop());
       paint(original, cropped);
@@ -201,6 +215,19 @@ export function mountLocalComparison(config: Config): {
       }
       const data = await response.json() as ComparisonResponse;
       if (turn !== current) return;
+      const head = data.results?.isolated;
+      if (head?.ok && head.png) {
+        try {
+          const image = await fromPng(head.png);
+          if (turn !== current) return;
+          paint(isolated, frameResult(image, false, false, 180, 0));
+          isolatedMessage.textContent = 'BiSeNet · alleen het hoofd';
+        } catch {
+          isolatedMessage.textContent = 'Kon de uitsnede niet openen.';
+        }
+      } else {
+        isolatedMessage.textContent = head?.error || 'Hoofdsegmentatie niet beschikbaar.';
+      }
       let ok = 0;
       for (const style of STYLES) {
         const result = data.results?.[style];
@@ -213,14 +240,14 @@ export function mountLocalComparison(config: Config): {
           if (turn !== current) return;
           rawResults[style] = drawing;
           chooseButtons[style].disabled = false;
-          messages[style].textContent = `${result.elapsed_ms ?? '?'} ms · echte modeluitvoer`;
+          messages[style].textContent = `${result.elapsed_ms ?? '?'} ms · ${natural(style) ? 'natuurlijke hoofdcontour' : 'originele modeluitvoer'}`;
           ++ok;
         } catch {
           messages[style].textContent = 'Kon de modeluitvoer niet openen.';
         }
       }
       renderPreviews();
-      show(`${ok}/3 modellen klaar. Wissel tussen originele lijnen en zwart-witdruk; kies een resultaat voor de sticker.`);
+      show(`${ok}/5 tekenvarianten klaar. Wissel tussen originele lijnen en zwart-witdruk; kies een resultaat voor de sticker.`);
     } catch (error) {
       if (turn !== current) return;
       show(`Vergelijken mislukt: ${error instanceof Error ? error.message : String(error)}`);
