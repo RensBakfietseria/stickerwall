@@ -9,3 +9,9 @@ shares
 template-assets
 events
 .claude/
+
+# Local portrait-comparison environment and generated Stickerwall build
+.local-portrait-venv/
+dist-stickerwall/
+local_portrait/assets/
+.local-portrait-bin/

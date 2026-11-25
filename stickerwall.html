@@ -11,13 +11,13 @@
   <body>
     <header class="top">
       <div class="wordmark">STICKERWALL<span class="dot">.</span></div>
-      <div class="tag">PROEFATELIER <strong>0.2</strong></div>
+      <div class="tag">PROEFATELIER <strong>0.3</strong></div>
     </header>
     <main>
       <section class="intro">
         <p class="eyebrow">EEN KLEIN EXPERIMENT IN GROTE COMPLIMENTEN</p>
         <h1>Geef iemands kwaliteiten <em>een gezicht.</em></h1>
-        <p>Maak een proefsticker met een fictief hoofd óf test een eigen foto lokaal met drie tekenfilters. Er is geen camera of AI gekoppeld.</p>
+        <p>Test je eigen foto met drie eenvoudige browserfilters, of vergelijk op je eigen computer twee echte offline tekenengines: G’MIC en Informative Drawings.</p>
       </section>
       <div class="workspace">
         <div class="controls">
@@ -36,7 +36,7 @@
                     <section class="panel portrait-panel" aria-labelledby="portrait-title">
             <div class="step">03 / HOOFDLAB</div>
             <h2 id="portrait-title">Herken jij jezelf?</h2>
-            <p>Probeer je eigen portret. De foto wordt alleen in de browser verwerkt, niet verstuurd of opgeslagen. Dit zijn beeldfilters, nog geen AI.</p>
+            <p>Een originele foto gebruiken geeft een eerlijke kwaliteitstest. De drie snelle filters blijven in je browser; G’MIC en Informative Drawings werken alleen op je eigen computer via de lokale server.</p>
             <div class="photo-action">
               <label class="button dark upload-button" for="portrait-file">Kies een foto op je apparaat</label>
               <input id="portrait-file" class="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp" />
@@ -61,8 +61,29 @@
                 <button type="button" class="portrait-style" data-portrait-style="contour" aria-pressed="false"><canvas id="contour-preview" width="240" height="270" aria-hidden="true"></canvas><strong>Contouren</strong><span>Gezichtsranden</span></button>
                 <button type="button" class="portrait-style" data-portrait-style="hybrid" aria-pressed="false"><canvas id="hybrid-preview" width="240" height="270" aria-hidden="true"></canvas><strong>Illustratief</strong><span>Lijnen en schaduw</span></button>
               </div>
+              <div class="local-compare" aria-labelledby="local-compare-title">
+                <h3 id="local-compare-title">Echte lokale kwaliteitsvergelijking</h3>
+                <p>Geen simulaties: dezelfde uitsnede gaat naar G’MIC Line Art en het lokale Informative Drawings ONNX-model. Alleen beschikbaar als je het Proefatelier lokaal op je laptop start.</p>
+                <button class="button dark" id="local-compare-run" type="button">Vergelijk G’MIC en Informative Drawings</button>
+                <p class="status" id="local-compare-status" role="status">Lokale engines worden gecontroleerd…</p>
+                <div class="local-candidates">
+                  <div class="local-candidate">
+                    <strong>G’MIC · Line Art</strong>
+                    <canvas id="local-preview-gmic" width="240" height="270" aria-label="G’MIC Line Art resultaat"></canvas>
+                    <p id="local-message-gmic">Nog niet getest</p>
+                    <button type="button" class="button light" id="local-select-gmic" aria-pressed="false" disabled>Gebruik G’MIC op sticker</button>
+                  </div>
+                  <div class="local-candidate">
+                    <strong>Informative Drawings · ONNX</strong>
+                    <canvas id="local-preview-informative" width="240" height="270" aria-label="Informative Drawings resultaat"></canvas>
+                    <p id="local-message-informative">Nog niet getest</p>
+                    <button type="button" class="button light" id="local-select-informative" aria-pressed="false" disabled>Gebruik Informative op sticker</button>
+                  </div>
+                </div>
+                <p class="footnote">Bij vergelijken stuurt de browser uitsluitend een verkleinde uitsnede naar de Python-server op 127.0.0.1, dus naar dezelfde computer. G’MIC gebruikt tijdelijk een bestand dat automatisch wordt gewist; er is geen cloudservice of fotogalerij.</p>
+              </div>
             </div>
-            <p class="footnote">Na verwijderen of herladen blijft geen foto in het Proefatelier bewaard. Geen uploads of externe AI.</p>
+            <p class="footnote">Na verwijderen of herladen bewaart het Proefatelier geen foto. Bij lokaal vergelijken gaat de uitsnede uitsluitend naar 127.0.0.1; geen cloud-AI.</p>
           </section>
           <section class="panel" aria-labelledby="print-title">
             <div class="step">04 / AFDRUKKEN</div>
@@ -83,7 +104,7 @@
           </div>
           <div class="paper"><canvas id="sticker" width="552" height="800" aria-label="Thermische sticker-voorvertoning"></canvas></div>
           <p id="sticker-name" class="sticker-name"></p>
-          <p class="privacy"><span aria-hidden="true">●</span> Een gekozen foto blijft in de browser. Geen uploads, geen archief en geen externe AI.</p>
+          <p class="privacy"><span aria-hidden="true">●</span> Geen cloud-AI of archief. Lokale vergelijking stuurt alleen een uitsnede naar deze computer (127.0.0.1).</p>
         </aside>
       </div>
     </main>

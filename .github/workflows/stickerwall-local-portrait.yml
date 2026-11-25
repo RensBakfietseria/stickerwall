@@ -1,0 +1,52 @@
+name: Sticky Wall local portrait engines
+
+on:
+  push:
+    branches:
+      - stickerwall-0-3-local-portrait-compare
+  pull_request:
+    paths:
+      - 'local_portrait/**'
+      - 'src/stickerwall/**'
+      - 'stickerwall.html'
+      - 'vite.stickerwall.config.ts'
+      - '.github/workflows/stickerwall-local-portrait.yml'
+  workflow_dispatch:
+
+jobs:
+  offline-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install minimal test dependencies
+        run: python -m pip install Pillow
+      - name: Test local engine contracts and missing dependencies
+        run: python -m unittest discover -s local_portrait -p 'test_*.py' -v
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run stickerwall:build
+      - run: npm run typecheck
+
+  engine-smoke:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install using the same one-command setup as the Windows user
+        shell: pwsh
+        run: powershell -ExecutionPolicy Bypass -File .\local_portrait\setup.ps1
+      - name: Real CPU inference with installed G'MIC and ONNX model
+        shell: pwsh
+        run: '& .\.local-portrait-venv\Scripts\python.exe local_portrait\smoke_test.py'

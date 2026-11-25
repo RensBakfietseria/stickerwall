@@ -1,4 +1,4 @@
-// Privacy-first sample entrypoint. No camera, photos, uploads, analytics, persistence or AI.
+// Privacy-first Proefatelier: local browser filters plus two loopback-only offline engines.
 import { printPhoto } from '../photo.ts';
 import type { PrinterBase } from '../printers/base.ts';
 import { connectPrinter } from '../printers/index.ts';
@@ -7,6 +7,7 @@ import { canvasToRaster, rasterToCanvas } from '../raster.ts';
 import type { Raster } from '../types.ts';
 import { drawSticker } from './artwork.ts';
 import { makePortraitStyles, PORTRAIT_STYLES, type Crop, type PortraitStyle } from './portrait.ts';
+import { mountLocalComparison } from './local-comparison.ts';
 import { CREATURES, QUALITIES, type Creature, type Quality, creatureName, toggleQuality } from './model.ts';
 
 function el<T extends HTMLElement>(id: string): T {
@@ -33,6 +34,7 @@ const styleButtons = [...document.querySelectorAll<HTMLButtonElement>('[data-por
 let photo: ImageBitmap | null = null;
 let portraitStyles: Record<PortraitStyle, HTMLCanvasElement> | null = null;
 let portraitStyle: PortraitStyle = 'marker';
+let selectedLocalPortrait: HTMLCanvasElement | null = null;
 let scheduled: number | null = null;
 let fileSelection = 0;
 
@@ -79,7 +81,7 @@ function renderChoices(): void {
 
 function render(): void {
   renderChoices();
-  const source = drawSticker(creature, qualities, portraitStyles?.[portraitStyle] ?? null);
+  const source = drawSticker(creature, qualities, selectedLocalPortrait ?? portraitStyles?.[portraitStyle] ?? null);
   // Photoboot's 1-bit raster pipeline: threshold keeps crisp illustration outlines.
   raster = canvasToRaster(source, { dither: 'threshold' });
   const preview = rasterToCanvas(raster);
@@ -127,7 +129,14 @@ function scheduleRebuild(): void {
   el<HTMLOutputElement>('y-value').value = ySlider.value;
   el<HTMLOutputElement>('thickness-value').value = thicknessSlider.value;
 }
+const localComparison = mountLocalComparison({
+  getImage: () => photo,
+  getCrop: cropOptions,
+  onSelect: result => { selectedLocalPortrait = result; render(); },
+});
+
 function clearPhoto(): void {
+  localComparison.reset();
   ++fileSelection;
   if (scheduled !== null) cancelAnimationFrame(scheduled);
   scheduled = null;
@@ -166,6 +175,7 @@ photoFile.addEventListener('change', async () => {
     }
     photo?.close();
     photo = bitmap;
+    localComparison.reset();
     photoControls.hidden = false;
     removePhoto.disabled = false;
     scheduleRebuild();
@@ -179,7 +189,7 @@ photoFile.addEventListener('change', async () => {
 });
 removePhoto.addEventListener('click', clearPhoto);
 for (const slider of [zoomSlider, xSlider, ySlider, thicknessSlider]) {
-  slider.addEventListener('input', () => { if (photo) scheduleRebuild(); });
+  slider.addEventListener('input', () => { if (photo) { localComparison.reset(); scheduleRebuild(); } });
 }
 for (const button of styleButtons) {
   button.addEventListener('click', () => {

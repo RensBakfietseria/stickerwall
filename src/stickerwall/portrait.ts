@@ -131,3 +131,25 @@ export function makePortraitStyles(image: ImageBitmap, opts: Crop): Record<Portr
   }
   return results;
 }
+
+/** High-resolution, portrait-aligned input for the two local engines.
+ * The original full-size photo never leaves the browser. Only this 512x576
+ * cropped derivative is POSTed to the same computer after a user click.
+ */
+export function makePortraitInput(image: ImageBitmap, opts: Crop): HTMLCanvasElement {
+  const width = 512, height = 576;
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('Canvas 2D niet beschikbaar.');
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, width, height);
+  const scale = Math.max(width / image.width, height / image.height) * opts.zoom;
+  const drawW = image.width * scale, drawH = image.height * scale;
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(image, (width - drawW) / 2 + opts.panX * width / 100,
+    (height - drawH) / 2 + opts.panY * height / 100, drawW, drawH);
+  return canvas;
+}
