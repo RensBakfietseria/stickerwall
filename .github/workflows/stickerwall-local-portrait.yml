@@ -40,21 +40,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Install official G'MIC 4.0.8 CLI on Windows
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install using the same one-command setup as the Windows user
         shell: pwsh
-        run: |
-          $zip = Join-Path $env:RUNNER_TEMP "gmic.zip"
-          $folder = Join-Path $env:RUNNER_TEMP "gmic"
-          Invoke-WebRequest -Uri "https://gmic.eu/get_file.php?file=windows%2Fgmic_4.0.8_cli_win64.zip" -OutFile $zip
-          Get-FileHash -Path $zip -Algorithm SHA256 | Format-List
-          Expand-Archive -Path $zip -DestinationPath $folder -Force
-          $exe = Get-ChildItem -Path $folder -Filter "gmic.exe" -Recurse | Select-Object -First 1
-          if (!$exe) { throw "Geen gmic.exe gevonden in de officiele CLI-download." }
-          "STICKERWALL_GMIC=$($exe.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          & $exe.FullName -version
-      - name: Install ONNX Runtime CPU and Pillow
-        run: python -m pip install -r local_portrait/requirements.txt
-      - name: Download pinned models and filter scripts (no portrait data)
-        run: python local_portrait/download_assets.py
-      - name: Real CPU inference smoke test with synthetic picture
-        run: python local_portrait/smoke_test.py
+        run: powershell -ExecutionPolicy Bypass -File .\local_portrait\setup.ps1
+      - name: Real CPU inference with installed G'MIC and ONNX model
+        shell: pwsh
+        run: '& .\.local-portrait-venv\Scripts\python.exe local_portrait\smoke_test.py'
