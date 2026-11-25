@@ -46,6 +46,7 @@ jobs:
           $zip = Join-Path $env:RUNNER_TEMP "gmic.zip"
           $folder = Join-Path $env:RUNNER_TEMP "gmic"
           Invoke-WebRequest -Uri "https://gmic.eu/get_file.php?file=windows%2Fgmic_4.0.8_cli_win64.zip" -OutFile $zip
+          Get-FileHash -Path $zip -Algorithm SHA256 | Format-List
           Expand-Archive -Path $zip -DestinationPath $folder -Force
           $exe = Get-ChildItem -Path $folder -Filter "gmic.exe" -Recurse | Select-Object -First 1
           if (!$exe) { throw "Geen gmic.exe gevonden in de officiele CLI-download." }
