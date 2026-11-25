@@ -14,7 +14,7 @@ if (!(Test-Path $python)) {
 }
 if (!(Test-Path $python)) { throw "Python-omgeving niet aangemaakt." }
 & $python -c "import PIL, numpy, onnxruntime; print('Python-omgeving klaar')"
-if ($LASTEXITCODE -ne 0) {
+if (($LASTEXITCODE -ne 0) -or ($env:STICKERWALL_REFRESH_PYTHON -eq "1")) {
   & $python -m pip install -r "local_portrait\requirements.txt"
   if ($LASTEXITCODE -ne 0) { throw "Python-pakketten installeren mislukt. Controleer ook de padlengte." }
 }
@@ -25,7 +25,7 @@ if ($LASTEXITCODE -ne 0) { throw "Modeldownload of integriteitscontrole mislukt.
 if (!(Get-Command npm.cmd -ErrorAction SilentlyContinue)) {
   throw "Node.js 22+ ontbreekt."
 }
-if (!(Test-Path "node_modules\.bin\vite.cmd")) {
+if (!(Test-Path "node_modules\.bin\vite.cmd") -or ($env:STICKERWALL_REFRESH_NODE -eq "1")) {
   & npm.cmd ci
   if ($LASTEXITCODE -ne 0) { throw "npm ci mislukt." }
 }

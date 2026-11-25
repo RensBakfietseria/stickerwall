@@ -4,7 +4,19 @@ Drie bestaande Informative Drawings ONNX-modellen (OpenSketch, Contour, Anime).
 Alle verwerking vindt op de eigen CPU plaats. G'MIC is geparkeerd na de
 Windows Smart App Control-blokkade. APDrawingGAN is nog geen actieve engine.
 
-## Bestaande Windows-installatie 0.3 bijwerken (aanbevolen)
+## Toekomstige updates
+
+Stop de lokale server met Ctrl+C. Open PowerShell in de bestaande Stickerwall-map:
+
+```powershell
+.\update.cmd
+```
+
+De updater haalt de vaste GitHub-branch `stickerwall-local-stable` op, gepind op de commit bij het begin van de update. Alleen op verzoek, nooit tijdens beeldverwerking. Geen Git nodig. Releasebeheer: deze branch uitsluitend naar een geteste commit verplaatsen; geen experimentele builds automatisch vrijgeven.
+
+De bestaande Python-omgeving, modellen en andere niet-beheerde bestanden blijven behouden. Gewijzigde dependencylijsten activeren de betreffende package-installatie. Bij een fout worden de vorige bronnen en websitebuild hersteld; gewijzigde dependencies worden niet automatisch teruggedraaid. De GitHub-releasecode is niet afzonderlijk ondertekend. Bewaar eigen wijzigingen buiten de beheerde bronbestanden. Start daarna met `local_portrait/start.ps1`.
+
+## Bestaande Windows-installatie 0.3 bijwerken
 
 1. Stop de lokale server in PowerShell met Ctrl+C.
 2. Download deze ontwikkelbranch als ZIP en pak hem uit. Installeer **niet**

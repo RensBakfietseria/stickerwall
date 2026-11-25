@@ -15,3 +15,7 @@ events
 dist-stickerwall/
 local_portrait/assets/
 .local-portrait-bin/
+
+.stickerwall-update-state.json
+.stickerwall-update-state.json.tmp
+.stickerwall-update.lock
