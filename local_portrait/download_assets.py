@@ -31,6 +31,18 @@ ASSET_LIST = (
         "5bb3c667c13aabb18dccf82efdf2dfbe0f9f755e",
         17925367,
     ),
+    (
+        "bisenet_resnet18.onnx",
+        "https://github.com/yakhyo/face-parsing/releases/download/weights/resnet18.onnx",
+        "sha256:0d9bd318e46987c3bdbfacae9e2c0f461cae1c6ac6ea6d43bbe541a91727e33f",
+        53205364,
+    ),
+    (
+        "u2net_portrait.onnx",
+        "https://github.com/cocoa-xu/U-2-Net/releases/download/onnx-20230530/u2net_portrait.onnx",
+        "DEVELOPMENT_HASH_PENDING",
+        176033758,
+    ),
 )
 
 
@@ -38,23 +50,38 @@ def git_blob_sha(data: bytes) -> str:
     return hashlib.sha1(b"blob " + str(len(data)).encode() + b"\0" + data).hexdigest()
 
 
+def verified(data, expected, size):
+    if len(data) != size:
+        return False
+    if expected.startswith("sha256:"):
+        return hashlib.sha256(data).hexdigest() == expected[7:]
+    if expected == "DEVELOPMENT_HASH_PENDING":
+        # Only the initial development CI may measure the original release hash.
+        import os
+        if os.environ.get("STICKERWALL_MEASURE_HASH") == "1" and os.environ.get("CI") == "true":
+            print("U2NET_RELEASE_SHA256=" + hashlib.sha256(data).hexdigest(), flush=True)
+            return True
+        return False
+    return git_blob_sha(data) == expected
+
+
 def main():
     ASSETS.mkdir(parents=True, exist_ok=True)
     for filename, url, expected_sha, expected_size in ASSET_LIST:
         path = ASSETS / filename
-        if path.exists() and git_blob_sha(path.read_bytes()) == expected_sha:
+        if path.exists() and verified(path.read_bytes(), expected_sha, expected_size):
             print(f"OK: {filename} (reeds gecontroleerd)")
             continue
         print(f"Downloaden (alleen tijdens installatie): {filename}")
-        with urllib.request.urlopen(url, timeout=90) as response:
+        with urllib.request.urlopen(url, timeout=180) as response:
             data = response.read(expected_size + 1)
-        if len(data) != expected_size or git_blob_sha(data) != expected_sha:
+        if not verified(data, expected_sha, expected_size):
             raise SystemExit(f"Integriteitscontrole mislukt: {filename}. Bestand niet geïnstalleerd.")
         temp = path.with_suffix(".download")
         temp.write_bytes(data)
         temp.replace(path)
-        print(f"OK: {filename}, {len(data) // 1024} KB, gecontroleerde Git SHA")
-    print("Drie ONNX-modellen klaar. Nu mag internet worden uitgeschakeld.")
+        print(f"OK: {filename}, {len(data) // 1024} KB, gecontroleerde bestandshash")
+    print("ONNX-modellen voor Cartoonlab klaar. Nu mag internet worden uitgeschakeld.")
 
 
 if __name__ == "__main__":

@@ -77,7 +77,7 @@ class Handler(BaseHTTPRequestHandler):
             return
         route = urlsplit(self.path).path
         if route == "/api/local/status":
-            self._json(200, {"local": True, "protocol": 4, "engines": readiness()})
+            self._json(200, {"local": True, "protocol": 5, "engines": readiness()})
             return
         if route == "/":
             route = "/stickerwall.html"
@@ -136,7 +136,7 @@ def main():
         raise SystemExit("Build ontbreekt: voer eerst npm run stickerwall:build uit.")
     server = ThreadingHTTPServer((HOST, PORT), Handler)
     print(f"Sticky Wall lokaal: http://{HOST}:{PORT}/stickerwall.html")
-    print("Artistiek Portretlab 0.4: OpenSketch, Contour, Anime. Geen cloud-API.")
+    print("Cartoonlab 0.5: natuurlijke hoofdcontouren en lokale portretmodellen. Geen cloud-API.")
     try:
         server.serve_forever()
     except KeyboardInterrupt:

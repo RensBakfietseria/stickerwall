@@ -1,10 +1,9 @@
-"""Informative Drawings: three original pretrained ONNX styles, offline CPU.
+"""Cartoonlab 0.5: original drawings, BiSeNet head isolation, U2-Net Portrait.
 
-No G'MIC executable, external process, network or image files in this path.
-Use one model session at a time to keep memory bounded on an 8 GB laptop.
+Only local CPU inference. One active ONNX session at a time.
+No image files, subprocesses, network calls or facial identification.
 """
 from __future__ import annotations
-
 import base64
 import io
 import os
@@ -13,75 +12,113 @@ import time
 
 from PIL import Image, ImageOps
 
+try:
+    from .head_mask import isolate, apply_silhouette, normalized_tensor
+except ImportError:
+    from head_mask import isolate, apply_silhouette, normalized_tensor
+
 ASSETS = Path(__file__).resolve().parent / "assets"
-STYLES = ("opensketch", "contour", "anime")
-MODEL_PATHS = {style: ASSETS / f"{style}_style_512x512.onnx" for style in STYLES}
+STYLES = ("opensketch", "contour", "anime", "contourplus", "u2net")
+MODEL_PATHS = {style: ASSETS / f"{style}_style_512x512.onnx" for style in STYLES[:3]}
+MODEL_PATHS["bisenet"] = ASSETS / "bisenet_resnet18.onnx"
+MODEL_PATHS["u2net"] = ASSETS / "u2net_portrait.onnx"
 _SESSION = None
 _SESSION_STYLE = None
 
 
-def readiness() -> dict:
-    return {style: {"ready": path.is_file(), "model": path.is_file()}
-            for style, path in MODEL_PATHS.items()}
+def readiness():
+    ready = {key: {"ready": path.is_file(), "model": path.is_file()} for key, path in MODEL_PATHS.items()}
+    ready["contourplus"] = {"ready": ready["bisenet"]["ready"] and ready["contour"]["ready"]}
+    ready["u2net"]["ready"] = ready["u2net"]["ready"] and ready["bisenet"]["ready"]
+    return ready
 
 
-def _encode_png(image: Image.Image) -> bytes:
+def _encode_png(image):
     output = io.BytesIO()
-    image.convert("RGB").save(output, format="PNG", optimize=True)
+    image.convert("RGBA" if image.mode == "RGBA" else "RGB").save(output, format="PNG", optimize=True)
     return output.getvalue()
 
 
-def informative_drawings(source: Image.Image, style: str) -> bytes:
+def get_session(style):
     global _SESSION, _SESSION_STYLE
-    if style not in MODEL_PATHS:
-        raise ValueError("Onbekende portretstijl.")
     path = MODEL_PATHS[style]
     if not path.is_file():
         raise RuntimeError(f"Model {style} ontbreekt. Voer setup.ps1 uit.")
-    import numpy as np
     import onnxruntime as ort
-
     if _SESSION_STYLE != style or _SESSION is None:
         _SESSION = None
         _SESSION_STYLE = None
         options = ort.SessionOptions()
         options.intra_op_num_threads = max(1, min(4, os.cpu_count() or 1))
-        _SESSION = ort.InferenceSession(
-            str(path), sess_options=options, providers=["CPUExecutionProvider"]
-        )
+        options.inter_op_num_threads = 1
+        _SESSION = ort.InferenceSession(str(path), sess_options=options, providers=["CPUExecutionProvider"])
         _SESSION_STYLE = style
+    return _SESSION
 
-    # Same RGB 0..255 NCHW preprocessing as the published ONNX conversion.
-    # Preserve the input aspect ratio with white padding, then remove padding.
-    image = source.convert("RGB")
-    original_size = image.size
-    scaled = ImageOps.contain(image, (512, 512), Image.Resampling.LANCZOS)
+
+def square_input(source):
+    scaled = ImageOps.contain(source.convert("RGB"), (512, 512), Image.Resampling.LANCZOS)
     square = Image.new("RGB", (512, 512), "white")
     left, top = (512 - scaled.width) // 2, (512 - scaled.height) // 2
     square.paste(scaled, (left, top))
-    tensor = np.asarray(square, dtype=np.float32).transpose(2, 0, 1)[None, ...]
-    output = _SESSION.run(None, {_SESSION.get_inputs()[0].name: tensor})[0]
-    gray = np.asarray(output).squeeze()
+    return square, (left, top, left + scaled.width, top + scaled.height)
+
+
+def informative_image(source, style):
+    import numpy as np
+    session = get_session(style)
+    square, region = square_input(source)
+    tensor = np.asarray(square, dtype=np.float32).transpose(2, 0, 1)[None]
+    gray = np.asarray(session.run(None, {session.get_inputs()[0].name: tensor})[0]).squeeze()
     if gray.shape != (512, 512) or not np.isfinite(gray).all():
-        raise RuntimeError("Het ONNX-model heeft een onverwachte output.")
-    gray = np.clip(gray * 255, 0, 255).astype("uint8")
-    result = Image.fromarray(gray, "L")
-    result = result.crop((left, top, left + scaled.width, top + scaled.height))
-    return _encode_png(result.resize(original_size, Image.Resampling.LANCZOS))
+        raise RuntimeError("Onverwachte Informative Drawings-uitvoer.")
+    result = Image.fromarray(np.clip(gray * 255, 0, 255).astype("uint8"), "L")
+    return result.crop(region).resize(source.size, Image.Resampling.LANCZOS)
 
 
-def compare(source: Image.Image) -> dict:
-    result = {}
-    for style in STYLES:
-        begin = time.perf_counter()
-        try:
-            png = informative_drawings(source, style)
-            result[style] = {
-                "ok": True,
-                "png": base64.b64encode(png).decode("ascii"),
-                "elapsed_ms": round((time.perf_counter() - begin) * 1000),
-            }
-        except Exception as exc:
-            # One missing or failing model must not hide the other results.
-            result[style] = {"ok": False, "error": str(exc)}
-    return result
+def informative_drawings(source, style):
+    return _encode_png(informative_image(source, style))
+
+
+def u2net_image(source):
+    """Original portrait model, not U2-Net background-removal weights."""
+    import numpy as np
+    session = get_session("u2net")
+    square, region = square_input(source)
+    tensor = normalized_tensor(square)
+    gray = np.asarray(session.run([session.get_outputs()[0].name],
+                                  {session.get_inputs()[0].name: tensor})[0]).squeeze()
+    if gray.shape != (512, 512) or not np.isfinite(gray).all():
+        raise RuntimeError("Onverwachte U2-Net Portrait-uitvoer.")
+    gray = 1 - gray
+    lo, hi = float(gray.min()), float(gray.max())
+    if hi - lo < 1e-6:
+        raise RuntimeError("U2-Net leverde geen tekening op.")
+    result = Image.fromarray(np.clip((gray - lo) / (hi - lo) * 255, 0, 255).astype("uint8"), "L")
+    return result.crop(region).resize(source.size, Image.Resampling.LANCZOS)
+
+
+def result(worker):
+    begin = time.perf_counter()
+    try:
+        png = worker()
+        return {"ok": True, "png": base64.b64encode(png).decode("ascii"),
+                "elapsed_ms": round((time.perf_counter() - begin) * 1000)}
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)}
+
+
+def compare(source):
+    outputs = {style: result(lambda s=style: informative_drawings(source, s)) for style in STYLES[:3]}
+    begin = time.perf_counter()
+    try:
+        isolated, mask = isolate(source, get_session("bisenet"))
+        outputs["isolated"] = {"ok": True, "png": base64.b64encode(_encode_png(isolated)).decode("ascii"),
+                               "elapsed_ms": round((time.perf_counter() - begin) * 1000)}
+    except Exception as exc:
+        error = {"ok": False, "error": str(exc)}
+        outputs.update({key: dict(error) for key in ("isolated", "contourplus", "u2net")})
+        return outputs
+    outputs["contourplus"] = result(lambda: _encode_png(apply_silhouette(informative_image(isolated, "contour"), mask)))
+    outputs["u2net"] = result(lambda: _encode_png(apply_silhouette(u2net_image(isolated), mask)))
+    return outputs

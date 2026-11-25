@@ -33,5 +33,5 @@ if (!(Test-Path "node_modules\.bin\vite.cmd") -or ($env:STICKERWALL_REFRESH_NODE
 if ($LASTEXITCODE -ne 0) { throw "Stickerwall-build mislukt." }
 
 # No G'MIC download/execution or changes to Windows security.
-Write-Host "Artistiek Portretlab 0.4 klaar: OpenSketch, Contour en Anime." -ForegroundColor Green
+Write-Host "Cartoonlab 0.5 klaar: Contour+, U2-Net Portrait en referenties." -ForegroundColor Green
 Write-Host "Internet mag uit. Start: powershell -ExecutionPolicy Bypass -File .\local_portrait\start.ps1"
