@@ -32,3 +32,20 @@ jobs:
       - run: npm ci
       - run: npm run stickerwall:build
       - run: npm run typecheck
+
+  engine-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install G'MIC CLI and CPU inference requirements
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y gmic
+          python -m pip install -r local_portrait/requirements.txt
+      - name: Download pinned models and filter scripts (no portrait data)
+        run: python local_portrait/download_assets.py
+      - name: Real CPU inference smoke test with synthetic picture
+        run: python local_portrait/smoke_test.py
