@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f7f3eb" />
+    <title>Stickerwall · Proefatelier</title>
+    <meta name="description" content="Offline proefatelier voor persoonlijke zwart-wit stickers." />
+    <link rel="stylesheet" href="/src/stickerwall/style.css" />
+  </head>
+  <body>
+    <header class="top">
+      <div class="wordmark">STICKERWALL<span class="dot">.</span></div>
+      <div class="tag">PROEFATELIER <strong>0.2</strong></div>
+    </header>
+    <main>
+      <section class="intro">
+        <p class="eyebrow">EEN KLEIN EXPERIMENT IN GROTE COMPLIMENTEN</p>
+        <h1>Geef iemands kwaliteiten <em>een gezicht.</em></h1>
+        <p>Maak een proefsticker met een fictief hoofd óf test een eigen foto lokaal met drie tekenfilters. Er is geen camera of AI gekoppeld.</p>
+      </section>
+      <div class="workspace">
+        <div class="controls">
+          <section class="panel" aria-labelledby="quality-title">
+            <div class="step">01 / KENMERKEN</div>
+            <h2 id="quality-title">Wat maakt deze collega bijzonder?</h2>
+            <p>Kies maximaal drie kwaliteiten.</p>
+            <div id="qualities" class="chips" aria-label="Kwaliteiten kiezen"></div>
+          </section>
+          <section class="panel" aria-labelledby="creature-title">
+            <div class="step">02 / HET WEZEN</div>
+            <h2 id="creature-title">Welk wezen past erbij?</h2>
+            <div id="creatures" class="creatures"></div>
+            <p class="footnote">De tekeningen zijn technische plaatsaanduiders. Definitieve handgetekende dierenillustraties komen later.</p>
+          </section>
+                    <section class="panel portrait-panel" aria-labelledby="portrait-title">
+            <div class="step">03 / HOOFDLAB</div>
+            <h2 id="portrait-title">Herken jij jezelf?</h2>
+            <p>Probeer je eigen portret. De foto wordt alleen in de browser verwerkt, niet verstuurd of opgeslagen. Dit zijn beeldfilters, nog geen AI.</p>
+            <div class="photo-action">
+              <label class="button dark upload-button" for="portrait-file">Kies een foto op je apparaat</label>
+              <input id="portrait-file" class="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp" />
+              <button class="button light" id="remove-photo" type="button" disabled>Verwijder foto</button>
+            </div>
+            <p id="portrait-status" class="status" role="status">Nog geen foto gekozen: we gebruiken het fictieve voorbeeldhoofd.</p>
+            <div id="portrait-controls" hidden>
+              <p class="helper">Zet het gezicht in het midden. Liefst een frontaal portret met een rustige achtergrond.</p>
+              <div class="adjustment">
+                <label for="portrait-zoom">Inzoomen <output id="zoom-value">135%</output></label>
+                <input id="portrait-zoom" type="range" min="100" max="270" value="135" step="5" />
+                <label for="portrait-x">Horizontaal schuiven <output id="x-value">0</output></label>
+                <input id="portrait-x" type="range" min="-75" max="75" value="0" step="5" />
+                <label for="portrait-y">Verticaal schuiven <output id="y-value">0</output></label>
+                <input id="portrait-y" type="range" min="-75" max="75" value="0" step="5" />
+                <label for="portrait-thickness">Lijnen dikker <output id="thickness-value">0</output></label>
+                <input id="portrait-thickness" type="range" min="0" max="2" value="0" step="1" />
+              </div>
+              <p class="helper">Vergelijk de drie resultaten en kies er één voor de sticker.</p>
+              <div id="portrait-styles" class="portrait-styles">
+                <button type="button" class="portrait-style selected" data-portrait-style="marker" aria-pressed="true"><canvas id="marker-preview" width="240" height="270" aria-hidden="true"></canvas><strong>Stiftlijnen</strong><span>Lokale contrastdrempel</span></button>
+                <button type="button" class="portrait-style" data-portrait-style="contour" aria-pressed="false"><canvas id="contour-preview" width="240" height="270" aria-hidden="true"></canvas><strong>Contouren</strong><span>Gezichtsranden</span></button>
+                <button type="button" class="portrait-style" data-portrait-style="hybrid" aria-pressed="false"><canvas id="hybrid-preview" width="240" height="270" aria-hidden="true"></canvas><strong>Illustratief</strong><span>Lijnen en schaduw</span></button>
+              </div>
+            </div>
+            <p class="footnote">Na verwijderen of herladen blijft geen foto in het Proefatelier bewaard. Geen uploads of externe AI.</p>
+          </section>
+          <section class="panel" aria-labelledby="print-title">
+            <div class="step">04 / AFDRUKKEN</div>
+            <h2 id="print-title">Klaar om te proberen?</h2>
+            <p>De voorvertoning is een echte zwart-wit 1-bit rasterafdruk van 552 pixels breed, voorbereid met Photoboot-code.</p>
+            <div class="actions">
+              <button id="connect" class="button dark" type="button">Verbind Bluetooth-printer</button>
+              <button id="print" class="button light" type="button" disabled>Print proefsticker</button>
+            </div>
+            <p id="printer-status" class="status" role="status">Nog geen printer verbonden. Het prototype werkt ook zonder printer.</p>
+            <p class="footnote">Bluetooth printen werkt in Chrome of Edge via localhost. De printer zelf is nog niet getest met Stickerwall.</p>
+          </section>
+        </div>
+        <aside class="result">
+          <div class="result-head">
+            <span>04 / JOUW STICKER</span>
+            <span>ZWART-WIT · 300 DPI DOELFORMAAT</span>
+          </div>
+          <div class="paper"><canvas id="sticker" width="552" height="800" aria-label="Thermische sticker-voorvertoning"></canvas></div>
+          <p id="sticker-name" class="sticker-name"></p>
+          <p class="privacy"><span aria-hidden="true">●</span> Een gekozen foto blijft in de browser. Geen uploads, geen archief en geen externe AI.</p>
+        </aside>
+      </div>
+    </main>
+    <footer>Gebaseerd op Photoboot van Marijn Van de Voorde (MIT). Dit is een aparte technische proefversie, geen kant-en-klare AI-fotobooth.</footer>
+    <script type="module" src="/src/stickerwall/main.ts"></script>
+  </body>
+</html>
