@@ -2,58 +2,36 @@ $ErrorActionPreference = "Stop"
 $root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 Set-Location $root
 
-if (Get-Command py -ErrorAction SilentlyContinue) {
-  & py -3.11 -c "import sys; print(sys.version)" 2>$null
-  if ($LASTEXITCODE -eq 0) {
-    & py -3.11 -m venv ".local-portrait-venv"
-  } else {
-    & py -3 -m venv ".local-portrait-venv"
-  }
-} elseif (Get-Command python -ErrorAction SilentlyContinue) {
-  & python -m venv ".local-portrait-venv"
-} else {
-  throw "Installeer eerst Python 3.11 of 3.12."
-}
 $python = Join-Path $root ".local-portrait-venv\Scripts\python.exe"
-if (!(Test-Path $python)) { throw "Python-omgeving niet aangemaakt." }
-& $python -m pip install --upgrade pip
-if ($LASTEXITCODE -ne 0) { throw "pip upgrade mislukt." }
-& $python -m pip install -r "local_portrait\requirements.txt"
-if ($LASTEXITCODE -ne 0) { throw "Installatie van Python-pakketten mislukt." }
-& $python "local_portrait\download_assets.py"
-if ($LASTEXITCODE -ne 0) { throw "Download van model/filter mislukt." }
-
-if (!(Get-Command npm -ErrorAction SilentlyContinue)) {
-  throw "Node.js 22+ ontbreekt. Installeer Node.js en voer setup.ps1 opnieuw uit."
+# Reuse the working 0.3 environment. Never move a Windows venv.
+if (!(Test-Path $python)) {
+  if (Get-Command py -ErrorAction SilentlyContinue) {
+    & py -3.11 -m venv ".local-portrait-venv"
+    if ($LASTEXITCODE -ne 0) { throw "Python 3.11 ontbreekt of de omgeving kon niet worden gemaakt." }
+  } else {
+    throw "Installeer eerst Python 3.11. Gebruik een korte projectmap direct op C:."
+  }
 }
-& npm ci
-if ($LASTEXITCODE -ne 0) { throw "npm ci mislukt." }
-& npm run stickerwall:build
+if (!(Test-Path $python)) { throw "Python-omgeving niet aangemaakt." }
+& $python -c "import PIL, numpy, onnxruntime; print('Python-omgeving klaar')"
+if (($LASTEXITCODE -ne 0) -or ($env:STICKERWALL_REFRESH_PYTHON -eq "1")) {
+  & $python -m pip install -r "local_portrait\requirements.txt"
+  if ($LASTEXITCODE -ne 0) { throw "Python-pakketten installeren mislukt. Controleer ook de padlengte." }
+}
+# Download only missing/changed models; the existing OpenSketch file is reused.
+& $python "local_portrait\download_assets.py"
+if ($LASTEXITCODE -ne 0) { throw "Modeldownload of integriteitscontrole mislukt." }
+
+if (!(Get-Command npm.cmd -ErrorAction SilentlyContinue)) {
+  throw "Node.js 22+ ontbreekt."
+}
+if (!(Test-Path "node_modules\.bin\vite.cmd") -or ($env:STICKERWALL_REFRESH_NODE -eq "1")) {
+  & npm.cmd ci
+  if ($LASTEXITCODE -ne 0) { throw "npm ci mislukt." }
+}
+& npm.cmd run stickerwall:build
 if ($LASTEXITCODE -ne 0) { throw "Stickerwall-build mislukt." }
 
-# Download the OFFICIAL Windows command-line ZIP, not the GIMP plugin.
-# Version pinned: 4.0.8. SHA256 verification is applied before unpacking.
-$binDir = Join-Path $root ".local-portrait-bin"
-$existing = Get-ChildItem $binDir -Filter gmic.exe -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
-if (!$existing) {
-  New-Item -ItemType Directory -Force -Path $binDir | Out-Null
-  $archive = Join-Path $binDir "gmic-4.0.8.zip"
-  $downloadUrl = "https://gmic.eu/get_file.php?file=windows%2Fgmic_4.0.8_cli_win64.zip"
-  Write-Host "Eenmalig G'MIC 4.0.8 downloaden vanaf de officiële website..."
-  Invoke-WebRequest -Uri $downloadUrl -OutFile $archive
-  # SHA-256 of the official 4.0.8 Windows CLI archive, measured on CI.
-  $expectedSha = "61df2eaad3b53e35897e91c11f4a837dfa52c312ede37f78f6b2fac4d86e5ebe"
-  $actualSha = (Get-FileHash -Path $archive -Algorithm SHA256).Hash.ToLowerInvariant()
-  if ($actualSha -ne $expectedSha) {
-    Remove-Item $archive -Force
-    throw "G'MIC integriteitscontrole mislukt. Er is niets uitgepakt."
-  }
-  Expand-Archive -Path $archive -DestinationPath $binDir -Force
-  Remove-Item $archive -Force
-  $existing = Get-ChildItem $binDir -Filter gmic.exe -Recurse | Select-Object -First 1
-}
-if (!$existing) { throw "G'MIC CLI installatie mislukt: gmic.exe ontbreekt." }
-Write-Host "G'MIC CLI klaar: $($existing.FullName)"
-Write-Host ""
-Write-Host "Installatie voltooid. Hierna kunnen beide engines offline draaien." -ForegroundColor Green
-Write-Host "Start: powershell -ExecutionPolicy Bypass -File .\local_portrait\start.ps1"
+# No G'MIC download/execution or changes to Windows security.
+Write-Host "Artistiek Portretlab 0.4 klaar: OpenSketch, Contour en Anime." -ForegroundColor Green
+Write-Host "Internet mag uit. Start: powershell -ExecutionPolicy Bypass -File .\local_portrait\start.ps1"

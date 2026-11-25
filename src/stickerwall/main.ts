@@ -1,4 +1,4 @@
-// Privacy-first Proefatelier: local browser filters plus two loopback-only offline engines.
+// Privacy-first Proefatelier: local browser filters plus three loopback-only ONNX styles.
 import { printPhoto } from '../photo.ts';
 import type { PrinterBase } from '../printers/base.ts';
 import { connectPrinter } from '../printers/index.ts';
@@ -132,17 +132,25 @@ function scheduleRebuild(): void {
 const localComparison = mountLocalComparison({
   getImage: () => photo,
   getCrop: cropOptions,
-  onSelect: result => { selectedLocalPortrait = result; render(); },
+  onSelect: (result) => {
+    selectedLocalPortrait = result;
+    for (const button of styleButtons) {
+      const active = !result && button.dataset.portraitStyle === portraitStyle;
+      button.classList.toggle('selected', active);
+      button.setAttribute('aria-pressed', String(active));
+    }
+    render();
+  },
 });
 
 function clearPhoto(): void {
-  localComparison.reset();
   ++fileSelection;
   if (scheduled !== null) cancelAnimationFrame(scheduled);
   scheduled = null;
   photo?.close();
   photo = null;
   portraitStyles = null;
+  localComparison.reset();
   photoFile.value = '';
   photoControls.hidden = true;
   removePhoto.disabled = true;
@@ -175,6 +183,7 @@ photoFile.addEventListener('change', async () => {
     }
     photo?.close();
     photo = bitmap;
+    portraitStyles = null;
     localComparison.reset();
     photoControls.hidden = false;
     removePhoto.disabled = false;
@@ -188,12 +197,14 @@ photoFile.addEventListener('change', async () => {
   }
 });
 removePhoto.addEventListener('click', clearPhoto);
-for (const slider of [zoomSlider, xSlider, ySlider, thicknessSlider]) {
+for (const slider of [zoomSlider, xSlider, ySlider]) {
   slider.addEventListener('input', () => { if (photo) { localComparison.reset(); scheduleRebuild(); } });
 }
+thicknessSlider.addEventListener('input', () => { if (photo) scheduleRebuild(); });
 for (const button of styleButtons) {
   button.addEventListener('click', () => {
     portraitStyle = button.dataset.portraitStyle as PortraitStyle;
+    localComparison.deselect();
     for (const other of styleButtons) {
       const active = other === button;
       other.classList.toggle('selected', active);
@@ -206,6 +217,13 @@ window.addEventListener('pagehide', () => {
   photo?.close();
   photo = null;
   portraitStyles = null;
+  localComparison.reset();
+  for (const style of PORTRAIT_STYLES) {
+    const canvas = el<HTMLCanvasElement>(style.id + '-preview');
+    canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height);
+  }
+  photoControls.hidden = true;
+  removePhoto.disabled = true;
 });
 
 connectButton.addEventListener('click', async () => {

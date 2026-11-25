@@ -11,13 +11,13 @@
   <body>
     <header class="top">
       <div class="wordmark">STICKERWALL<span class="dot">.</span></div>
-      <div class="tag">PROEFATELIER <strong>0.3</strong></div>
+      <div class="tag">PROEFATELIER <strong>0.4</strong></div>
     </header>
     <main>
       <section class="intro">
         <p class="eyebrow">EEN KLEIN EXPERIMENT IN GROTE COMPLIMENTEN</p>
         <h1>Geef iemands kwaliteiten <em>een gezicht.</em></h1>
-        <p>Test je eigen foto met drie eenvoudige browserfilters, of vergelijk op je eigen computer twee echte offline tekenengines: G’MIC en Informative Drawings.</p>
+        <p>Vergelijk drie lokale AI-tekenstijlen op dezelfde originele foto: OpenSketch, Contour en Anime. Kies daarna je favoriete hoofd voor het wezen.</p>
       </section>
       <div class="workspace">
         <div class="controls">
@@ -36,7 +36,7 @@
                     <section class="panel portrait-panel" aria-labelledby="portrait-title">
             <div class="step">03 / HOOFDLAB</div>
             <h2 id="portrait-title">Herken jij jezelf?</h2>
-            <p>Een originele foto gebruiken geeft een eerlijke kwaliteitstest. De drie snelle filters blijven in je browser; G’MIC en Informative Drawings werken alleen op je eigen computer via de lokale server.</p>
+            <p>Kies een onbewerkte portretfoto. Alle AI-modellen draaien op je eigen computer. De drie eenvoudige browserfilters blijven beschikbaar als referentie.</p>
             <div class="photo-action">
               <label class="button dark upload-button" for="portrait-file">Kies een foto op je apparaat</label>
               <input id="portrait-file" class="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp" />
@@ -52,7 +52,7 @@
                 <input id="portrait-x" type="range" min="-75" max="75" value="0" step="5" />
                 <label for="portrait-y">Verticaal schuiven <output id="y-value">0</output></label>
                 <input id="portrait-y" type="range" min="-75" max="75" value="0" step="5" />
-                <label for="portrait-thickness">Lijnen dikker <output id="thickness-value">0</output></label>
+                <label for="portrait-thickness">Browserfilters: lijnen dikker <output id="thickness-value">0</output></label>
                 <input id="portrait-thickness" type="range" min="0" max="2" value="0" step="1" />
               </div>
               <p class="helper">Vergelijk de drie resultaten en kies er één voor de sticker.</p>
@@ -62,25 +62,52 @@
                 <button type="button" class="portrait-style" data-portrait-style="hybrid" aria-pressed="false"><canvas id="hybrid-preview" width="240" height="270" aria-hidden="true"></canvas><strong>Illustratief</strong><span>Lijnen en schaduw</span></button>
               </div>
               <div class="local-compare" aria-labelledby="local-compare-title">
-                <h3 id="local-compare-title">Echte lokale kwaliteitsvergelijking</h3>
-                <p>Geen simulaties: dezelfde uitsnede gaat naar G’MIC Line Art en het lokale Informative Drawings ONNX-model. Alleen beschikbaar als je het Proefatelier lokaal op je laptop start.</p>
-                <button class="button dark" id="local-compare-run" type="button">Vergelijk G’MIC en Informative Drawings</button>
+                <div class="step">03B / ARTISTIEK PORTRETLAB</div>
+                <h3 id="local-compare-title">Van foto naar een getekend hoofd</h3>
+                <p>Drie echte Informative Drawings-modellen krijgen dezelfde uitsnede. Bekijk eerst de originele modeluitvoer en daarna de zwart-witversie voor de printer.</p>
+                <button class="button dark" id="local-compare-run" type="button" disabled>Vergelijk de drie AI-stijlen</button>
                 <p class="status" id="local-compare-status" role="status">Lokale engines worden gecontroleerd…</p>
+                <div class="local-finish">
+                  <div class="local-modes" role="group" aria-label="Weergave">
+                    <button class="button light" type="button" id="local-mode-raw" aria-pressed="true">Origineel model</button>
+                    <button class="button light" type="button" id="local-mode-ink" aria-pressed="false">Zwart-witdruk</button>
+                  </div>
+                  <label class="local-mask"><input id="local-oval-mask" type="checkbox" checked /> Ovaalmasker (ook op sticker)</label>
+                  <div class="adjustment">
+                    <label for="local-ink-cutoff">Zwart-witdrempel <output id="local-cutoff-value">180</output></label>
+                    <input id="local-ink-cutoff" type="range" min="90" max="245" value="180" step="5" />
+                    <label for="local-ink-thickness">Inktlijnen dikker <output id="local-thickness-value">0</output></label>
+                    <input id="local-ink-thickness" type="range" min="0" max="2" value="0" step="1" />
+                  </div>
+                  <p class="helper">Hogere drempel maakt meer lijnen zwart. Deze afwerking verandert het AI-model niet en werkt zonder opnieuw vergelijken. Zet het masker uit om de volledige hoofdcontour te zien.</p>
+                </div>
                 <div class="local-candidates">
                   <div class="local-candidate">
-                    <strong>G’MIC · Line Art</strong>
-                    <canvas id="local-preview-gmic" width="240" height="270" aria-label="G’MIC Line Art resultaat"></canvas>
-                    <p id="local-message-gmic">Nog niet getest</p>
-                    <button type="button" class="button light" id="local-select-gmic" aria-pressed="false" disabled>Gebruik G’MIC op sticker</button>
+                    <strong>Originele uitsnede</strong><span class="local-model-label">Gelijke invoer voor alle modellen</span>
+                    <canvas id="local-original" width="512" height="576" aria-label="Originele portretuitsnede"></canvas>
+                    <p>Geen filter of masker</p>
                   </div>
                   <div class="local-candidate">
-                    <strong>Informative Drawings · ONNX</strong>
-                    <canvas id="local-preview-informative" width="240" height="270" aria-label="Informative Drawings resultaat"></canvas>
-                    <p id="local-message-informative">Nog niet getest</p>
-                    <button type="button" class="button light" id="local-select-informative" aria-pressed="false" disabled>Gebruik Informative op sticker</button>
+                    <strong>OpenSketch</strong><span class="local-model-label">Schetslijnen</span>
+                    <canvas id="local-preview-opensketch" width="512" height="576" aria-label="OpenSketch resultaat"></canvas>
+                    <p id="local-message-opensketch">Nog niet getest</p>
+                    <button type="button" class="button light" id="local-select-opensketch" aria-pressed="false" disabled>Gebruik op sticker</button>
+                  </div>
+                  <div class="local-candidate">
+                    <strong>Contour</strong><span class="local-model-label">Contourmodel</span>
+                    <canvas id="local-preview-contour" width="512" height="576" aria-label="Contour resultaat"></canvas>
+                    <p id="local-message-contour">Nog niet getest</p>
+                    <button type="button" class="button light" id="local-select-contour" aria-pressed="false" disabled>Gebruik op sticker</button>
+                  </div>
+                  <div class="local-candidate">
+                    <strong>Anime</strong><span class="local-model-label">Anime-lijnmodel</span>
+                    <canvas id="local-preview-anime" width="512" height="576" aria-label="Anime resultaat"></canvas>
+                    <p id="local-message-anime">Nog niet getest</p>
+                    <button type="button" class="button light" id="local-select-anime" aria-pressed="false" disabled>Gebruik op sticker</button>
                   </div>
                 </div>
-                <p class="footnote">Bij vergelijken stuurt de browser uitsluitend een verkleinde uitsnede naar de Python-server op 127.0.0.1, dus naar dezelfde computer. G’MIC gebruikt tijdelijk een bestand dat automatisch wordt gewist; er is geen cloudservice of fotogalerij.</p>
+                <p class="footnote">De sticker gebruikt altijd de zwart-witafwerking. De headlaag is 226 × 252 printerpunten binnen de bestaande 552-punts sticker. G’MIC is geparkeerd; APDrawingGAN is nog geen werkend model in deze build.</p>
+                <p class="footnote">Alleen de verkleinde uitsnede gaat naar de server op 127.0.0.1. Geen externe AI, uitvoerbare G’MIC of opslag van portretfoto’s.</p>
               </div>
             </div>
             <p class="footnote">Na verwijderen of herladen bewaart het Proefatelier geen foto. Bij lokaal vergelijken gaat de uitsnede uitsluitend naar 127.0.0.1; geen cloud-AI.</p>

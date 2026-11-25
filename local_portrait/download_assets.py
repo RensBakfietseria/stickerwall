@@ -20,10 +20,16 @@ ASSET_LIST = (
         17925367,
     ),
     (
-        "claude_lion.gmic",
-        "https://raw.githubusercontent.com/GreycLab/gmic-community/acb46a91abdbe68c2612b04856f3af575a82162f/include/claude_lion.gmic",
-        "ebc5fb26bc71aa9177ecb008fefa014e709f44ad",
-        27249,
+        "contour_style_512x512.onnx",
+        "https://raw.githubusercontent.com/Kazuhito00/Informative-Drawings-ONNX-Sample/541eb96e237d1f68fc68b4219958347c84b6dd2f/model/contour_style_512x512.onnx",
+        "32699e18159e104abbf794377d168cdbd72e2a16",
+        17925367,
+    ),
+    (
+        "anime_style_512x512.onnx",
+        "https://raw.githubusercontent.com/Kazuhito00/Informative-Drawings-ONNX-Sample/541eb96e237d1f68fc68b4219958347c84b6dd2f/model/anime_style_512x512.onnx",
+        "5bb3c667c13aabb18dccf82efdf2dfbe0f9f755e",
+        17925367,
     ),
 )
 
@@ -48,7 +54,7 @@ def main():
         temp.write_bytes(data)
         temp.replace(path)
         print(f"OK: {filename}, {len(data) // 1024} KB, gecontroleerde Git SHA")
-    print("Modellen en filtercode klaar. Nu mag internet worden uitgeschakeld.")
+    print("Drie ONNX-modellen klaar. Nu mag internet worden uitgeschakeld.")
 
 
 if __name__ == "__main__":
