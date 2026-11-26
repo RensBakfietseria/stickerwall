@@ -11,13 +11,13 @@
   <body>
     <header class="top">
       <div class="wordmark">STICKERWALL<span class="dot">.</span></div>
-      <div class="tag">PROEFATELIER <strong>0.6</strong></div>
+      <div class="tag">PROEFATELIER <strong>0.7</strong></div>
     </header>
     <main>
       <section class="intro">
         <p class="eyebrow">EEN KLEIN EXPERIMENT IN GROTE COMPLIMENTEN</p>
         <h1>Geef iemands kwaliteiten <em>een gezicht.</em></h1>
-        <p>Eén lokaal getekend hoofd, drie grafische afwerkingen. Ontdek welke U²-stijl het beste bij jouw sticker past.</p>
+        <p>Eén lokaal getekend hoofd. Vergelijk Sticker met Adaptief: minder dichtgelopen haar en sterker gezicht.</p>
       </section>
       <div class="workspace">
         <div class="controls">
@@ -62,10 +62,10 @@
                 <button type="button" class="portrait-style" data-portrait-style="hybrid" aria-pressed="false"><canvas id="hybrid-preview" width="240" height="270" aria-hidden="true"></canvas><strong>Illustratief</strong><span>Lijnen en schaduw</span></button>
               </div>
               <div class="local-compare" aria-labelledby="local-compare-title">
-                <div class="step">03B / U² FOCUS</div>
+                <div class="step">03B / U² ADAPTIEF</div>
                 <h3 id="local-compare-title">Van lijntekening naar stickerhoofd</h3>
-                <p>U²-Net is onze voorkeursroute. Vergelijk drie afwerkingen van dezelfde tekening op de werkelijke afdrukresolutie van het hoofd. Geen extra AI-modellen nodig.</p>
-                <button class="button dark" id="local-compare-run" type="button" disabled>Maak drie U²-afwerkingen</button>
+                <p>Vergelijk de huidige Sticker met Adaptief. BiSeNet onderscheidt haar en gezichtsdetails, zodat we niet overal evenveel inkt toevoegen. Basis en Bold blijven als referentie.</p>
+                <button class="button dark" id="local-compare-run" type="button" disabled>Maak U²-afwerkingen</button>
                 <p class="status" id="local-compare-status" role="status">Lokale engines worden gecontroleerd…</p>
                 <label class="local-mask"><input id="local-include-references" type="checkbox" /> Ook Contour, Contour+, OpenSketch en Anime berekenen</label>
                 <div class="local-finish">
@@ -79,10 +79,32 @@
                     <label for="local-ink-thickness">Extra lijndikte <output id="local-thickness-value">0</output></label>
                     <input id="local-ink-thickness" type="range" min="0" max="2" value="0" step="1" />
                   </div>
+                  <div class="adjustment local-adaptive-controls">
+                    <label for="local-hair-relief">Haar luchtiger (Adaptief) <output id="local-hair-value">1</output></label>
+                    <input id="local-hair-relief" type="range" min="0" max="2" value="1" step="1" />
+                    <label for="local-face-detail">Gezichtsdetails sterker (Adaptief) <output id="local-face-value">1</output></label>
+                    <input id="local-face-detail" type="range" min="0" max="2" value="1" step="1" />
+                  </div>
                   <button class="button light" type="button" id="local-reset-finish">Herstel standaardafwerking</button>
-                  <p class="helper">De drie afwerkingen hebben elk hun eigen instelling; deze schuiven passen ze gezamenlijk aan. Bij Modeluitvoer toont Basis de onbewerkte U²-tekening met de natuurlijke contour; Bold en Sticker blijven afdrukvoorbeelden.</p>
+                  <p class="helper">De algemene schuiven gelden voor alle varianten. Haar en gezichtsdetails hieronder gelden alleen voor Adaptief. Bij Modeluitvoer toont Basis de onbewerkte U²-tekening; de andere U²-kaarten blijven afdrukvoorbeelden.</p>
                 </div>
                 <div class="local-candidates u2-candidates">
+                  <div class="local-candidate">
+                    <strong>U² Sticker</strong><span class="local-model-label">Huidige standaard · Build 0.6</span>
+                    <canvas id="local-preview-u2sticker" width="226" height="252" aria-label="U² Sticker resultaat"></canvas>
+                    <p id="local-message-u2sticker">Nog niet getest</p>
+                    <button type="button" class="button light" id="local-select-u2sticker" aria-pressed="false" disabled>Gebruik op sticker</button>
+                  </div>
+                  <div class="local-candidate">
+                    <strong>U² Adaptief</strong><span class="local-model-label">Proefvariant · haar en gezicht apart</span>
+                    <canvas id="local-preview-u2adaptive" width="226" height="252" aria-label="U² Adaptief resultaat"></canvas>
+                    <p id="local-message-u2adaptive">Nog niet getest</p>
+                    <button type="button" class="button light" id="local-select-u2adaptive" aria-pressed="false" disabled>Gebruik op sticker</button>
+                  </div>
+                </div>
+                <details class="local-reference-details">
+                  <summary>U² Basis en Bold (referentieafwerkingen)</summary>
+                  <div class="local-candidates">
                   <div class="local-candidate">
                     <strong>U² Basis</strong><span class="local-model-label">De zwart-witafwerking van Build 0.5</span>
                     <canvas id="local-preview-u2net" width="226" height="252" aria-label="U² Basis resultaat"></canvas>
@@ -95,13 +117,8 @@
                     <p id="local-message-u2bold">Nog niet getest</p>
                     <button type="button" class="button light" id="local-select-u2bold" aria-pressed="false" disabled>Gebruik op sticker</button>
                   </div>
-                  <div class="local-candidate">
-                    <strong>U² Sticker</strong><span class="local-model-label">Proefvoorkeur · selectieve lijnversterking</span>
-                    <canvas id="local-preview-u2sticker" width="226" height="252" aria-label="U² Sticker resultaat"></canvas>
-                    <p id="local-message-u2sticker">Nog niet getest</p>
-                    <button type="button" class="button light" id="local-select-u2sticker" aria-pressed="false" disabled>Gebruik op sticker</button>
                   </div>
-                </div>
+                </details>
                 <details class="local-reference-details" id="local-reference-details">
                   <summary>Originele foto, hoofdsegmentatie en oude referenties</summary>
                   <label class="local-mask"><input id="local-oval-mask" type="checkbox" /> Ovaalmasker (alleen Contour, OpenSketch en Anime)</label>
@@ -116,6 +133,11 @@
                       <canvas id="local-isolated" width="512" height="576" aria-label="Geïsoleerd hoofd"></canvas>
                       <p id="local-isolated-message">Nog niet getest</p>
                     </div>
+                  <div class="local-candidate">
+                    <strong>Adaptieve regio's</strong><span class="local-model-label">BiSeNet · zelfde uitsnede</span>
+                    <canvas id="local-regions" width="226" height="252" aria-label="Regiokaart haar en gezichtsdetails"></canvas>
+                    <p id="local-regions-message">Nog niet getest</p>
+                  </div>
                   <div class="local-candidate">
                     <strong>Contour</strong><span class="local-model-label">Referentie uit 0.4</span>
                     <canvas id="local-preview-contour" width="226" height="252" aria-label="Contour resultaat"></canvas>
@@ -142,7 +164,7 @@
                   </div>
                   </div>
                 </details>
-                <p class="footnote">De drie U²-afwerkingen behouden dezelfde hoofdvorm en gebruiken 226 × 252 punten binnen de bestaande 552-punts sticker. Sticker versterkt alleen bestaande donkere lijnen en haalt kleine losse spikkels weg; het tekent geen nieuwe gelaatstrekken. APDrawingGAN en extra modellen blijven buiten deze build.</p>
+                <p class="footnote">Alle U²-afwerkingen behouden dezelfde hoofdvorm en gebruiken 226 × 252 punten binnen de bestaande 552-punts sticker. Adaptief houdt de buitenrand gelijk aan Sticker, vermindert inkt in herkend haar en versterkt bestaande lijnen rond ogen, bril, neus en mond. Geen nieuwe gelaatstrekken. APDrawingGAN en extra modellen blijven buiten deze build.</p>
                 <p class="footnote">Alleen de verkleinde uitsnede gaat naar de server op 127.0.0.1. Geen externe AI of opslag van portretfoto’s.</p>
               </div>
             </div>

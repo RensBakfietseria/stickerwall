@@ -1,13 +1,14 @@
 import { thresholdInk } from './ink.ts';
+import { finishAdaptive } from './u2-adaptive.ts';
 import { finishU2, type U2Finish } from './u2-finish.ts';
 import { type Crop, makePortraitInput } from './portrait.ts';
 
 const MODELS = ['u2net', 'contour', 'contourplus', 'opensketch', 'anime'] as const;
 type Model = (typeof MODELS)[number];
-const STYLES = ['u2net', 'u2bold', 'u2sticker', 'contour', 'contourplus', 'opensketch', 'anime'] as const;
+const STYLES = ['u2net', 'u2bold', 'u2sticker', 'u2adaptive', 'contour', 'contourplus', 'opensketch', 'anime'] as const;
 type Style = (typeof STYLES)[number];
 const PRESETS: Partial<Record<Style, U2Finish>> = { u2net: 'basis', u2bold: 'bold', u2sticker: 'sticker' };
-const modelFor = (style: Style): Model => PRESETS[style] ? 'u2net' : style as Model;
+const modelFor = (style: Style): Model => PRESETS[style] || style === 'u2adaptive' ? 'u2net' : style as Model;
 const LABELS: Record<Style, string> = {
   opensketch: 'OpenSketch',
   contour: 'Contour',
@@ -15,10 +16,11 @@ const LABELS: Record<Style, string> = {
   u2net: 'U² Basis',
   u2bold: 'U² Bold',
   u2sticker: 'U² Sticker',
+  u2adaptive: 'U² Adaptief',
   anime: 'Anime',
 };
 type BackendResult = { ok: boolean; png?: string; error?: string; elapsed_ms?: number };
-type ComparisonResponse = { results: Partial<Record<Model | 'isolated', BackendResult>> };
+type ComparisonResponse = { results: Partial<Record<Model | 'isolated' | 'regions', BackendResult>> };
 type Config = {
   getImage: () => ImageBitmap | null;
   getCrop: () => Crop;
@@ -53,7 +55,7 @@ function fromPng(base64: string): Promise<HTMLImageElement> {
 /** Preserve raw output for judging style, or create a pure black/white print layer.
  * Print layer dimensions match artwork.ts (226 x 252 printer dots).
  */
-function frameResult(image: HTMLImageElement, print: boolean, mask: boolean, cutoff: number, thickness: number, natural = false, preset?: U2Finish): HTMLCanvasElement {
+function frameResult(image: HTMLImageElement, print: boolean, mask: boolean, cutoff: number, thickness: number, natural = false, preset?: U2Finish, adaptive?: {regions: Uint8ClampedArray; hair: number; detail: number}): HTMLCanvasElement {
   const canvas = document.createElement('canvas');
   canvas.width = print ? 226 : image.naturalWidth;
   canvas.height = print ? 252 : image.naturalHeight;
@@ -69,8 +71,8 @@ function frameResult(image: HTMLImageElement, print: boolean, mask: boolean, cut
   ctx.drawImage(image, 0, 0, w, h);
   if (print) {
     const pixels = ctx.getImageData(0, 0, w, h);
-    const ink = preset ? finishU2(pixels.data, w, h, preset, cutoff, thickness) : thresholdInk(pixels.data, w, h, cutoff, thickness);
-    if (natural && !preset) {
+    const ink = adaptive ? finishAdaptive(pixels.data, w, h, adaptive.regions, cutoff, thickness, adaptive.hair, adaptive.detail) : preset ? finishU2(pixels.data, w, h, preset, cutoff, thickness) : thresholdInk(pixels.data, w, h, cutoff, thickness);
+    if (natural && !preset && !adaptive) {
       // Keep the semantic head silhouette instead of a rectangular white box.
       for (let i = 3; i < ink.length; i += 4) ink[i] = pixels.data[i] >= 128 ? 255 : 0;
     }
@@ -108,7 +110,13 @@ export function mountLocalComparison(config: Config): {
   const original = required<HTMLCanvasElement>('local-original');
   const isolated = required<HTMLCanvasElement>('local-isolated');
   const isolatedMessage = required<HTMLParagraphElement>('local-isolated-message');
-  const natural = (style: Style) => style === 'contourplus' || Boolean(PRESETS[style]);
+  const natural = (style: Style) => style === 'contourplus' || Boolean(PRESETS[style]) || style === 'u2adaptive';
+  const hairInput = required<HTMLInputElement>('local-hair-relief');
+  const detailInput = required<HTMLInputElement>('local-face-detail');
+  const regionPreview = required<HTMLCanvasElement>('local-regions');
+  const regionMessage = required<HTMLParagraphElement>('local-regions-message');
+  let regionPixels: Uint8ClampedArray | null = null;
+  const adaptiveFor = (style: Style) => style === 'u2adaptive' && regionPixels ? {regions: regionPixels, hair: Number(hairInput.value), detail: Number(detailInput.value)} : undefined;
   const references = required<HTMLInputElement>('local-include-references');
   const referenceDetails = required<HTMLDetailsElement>('local-reference-details');
   const cutoffInput = required<HTMLInputElement>('local-ink-cutoff');
@@ -137,7 +145,7 @@ export function mountLocalComparison(config: Config): {
 
   function renderSelected(): void {
     const image = selected ? rawResults[modelFor(selected)] : undefined;
-    config.onSelect(image && selected ? frameResult(image, true, maskInput.checked, Number(cutoffInput.value), Number(thicknessInput.value), natural(selected), PRESETS[selected]) : null);
+    config.onSelect(image && selected ? frameResult(image, true, maskInput.checked, Number(cutoffInput.value), Number(thicknessInput.value), natural(selected), PRESETS[selected], adaptiveFor(selected)) : null);
   }
 
   function deselect(): void {
@@ -149,11 +157,13 @@ export function mountLocalComparison(config: Config): {
   function renderPreviews(): void {
     required<HTMLOutputElement>('local-cutoff-value').value = cutoffInput.value;
     required<HTMLOutputElement>('local-thickness-value').value = thicknessInput.value;
+    required<HTMLOutputElement>('local-hair-value').value = hairInput.value;
+    required<HTMLOutputElement>('local-face-value').value = detailInput.value;
     rawButton.setAttribute('aria-pressed', String(mode === 'raw'));
     inkButton.setAttribute('aria-pressed', String(mode === 'ink'));
     for (const style of STYLES) {
       const image = rawResults[modelFor(style)];
-      if (image) paint(previews[style], frameResult(image, mode === 'ink' || style === 'u2bold' || style === 'u2sticker', maskInput.checked, Number(cutoffInput.value), Number(thicknessInput.value), natural(style), PRESETS[style]));
+      if (image && (style !== 'u2adaptive' || regionPixels)) paint(previews[style], frameResult(image, mode === 'ink' || style === 'u2bold' || style === 'u2sticker' || style === 'u2adaptive', maskInput.checked, Number(cutoffInput.value), Number(thicknessInput.value), natural(style), PRESETS[style], adaptiveFor(style)));
     }
     if (selected) renderSelected();
   }
@@ -169,12 +179,15 @@ export function mountLocalComparison(config: Config): {
       paint(previews[style], null);
       messages[style].textContent = 'Nog niet getest';
     }
+    regionPixels = null;
+    paint(regionPreview, null);
+    regionMessage.textContent = 'Nog niet getest';
     paint(isolated, null);
     isolatedMessage.textContent = 'Nog niet getest';
     deselect();
     updateOriginal();
     references.disabled = false;
-    if (serverReady) show('Kies Vergelijk om de drie U²-afwerkingen te maken.');
+    if (serverReady) show('Kies Vergelijk om de vier U²-afwerkingen te maken.');
   }
 
   compareButton.disabled = true;
@@ -187,13 +200,13 @@ export function mountLocalComparison(config: Config): {
         return response.json() as Promise<{ protocol: number; local: boolean; engines: Record<Model, { ready: boolean }> }>;
       })
       .then((info) => {
-        if (info.protocol !== 6 || !info.local) throw new Error('Start eerst de 0.6-server.');
+        if (info.protocol !== 7 || !info.local) throw new Error('Start eerst de 0.7-server.');
         serverReady = true;
         compareButton.disabled = false;
-        show(info.engines?.u2net?.ready ? 'Lokale 0.6-server · U²-Net en hoofdsegmentatie klaar.' : 'Lokale 0.6-server · U²-model of hoofdsegmentatie ontbreekt. Voer setup uit.');
+        show(info.engines?.u2net?.ready ? 'Lokale 0.7-server · U²-Net en hoofdsegmentatie klaar.' : 'Lokale 0.7-server · U²-model of hoofdsegmentatie ontbreekt. Voer setup uit.');
       })
       .catch(() => {
-        show('Geen lokale 0.6-server gevonden. Sluit de oude versie en start de nieuwe versie.');
+        show('Geen lokale 0.7-server gevonden. Sluit de oude versie en start de nieuwe versie.');
       });
   }
 
@@ -241,6 +254,28 @@ export function mountLocalComparison(config: Config): {
       } else {
         isolatedMessage.textContent = head?.error || 'Hoofdsegmentatie niet beschikbaar.';
       }
+      const regionResult = data.results?.regions;
+      if (regionResult?.ok && regionResult.png) {
+        try {
+          const image = await fromPng(regionResult.png);
+          if (turn !== current) return;
+          const map = document.createElement('canvas');
+          map.width = 226; map.height = 252;
+          const ctx = map.getContext('2d', {willReadFrequently: true});
+          if (!ctx) throw new Error('Geen regio-canvas.');
+          ctx.imageSmoothingEnabled = false;
+          ctx.drawImage(image, 0, 0, 226, 252);
+          const pixels = ctx.getImageData(0, 0, 226, 252).data;
+          if (!pixels.some((v,i) => (i%4===0 || i%4===1) && v>=128)) throw new Error('Geen bruikbare haar- of detailregio.');
+          regionPixels = pixels;
+          paint(regionPreview, map);
+          regionMessage.textContent = 'Rood = haar, groen = gezichtdetails, blauw = buitenrand.';
+        } catch {
+          regionMessage.textContent = 'Regiokaart niet bruikbaar; Sticker blijft beschikbaar.';
+        }
+      } else {
+        regionMessage.textContent = 'Regiokaart ontbreekt; Sticker blijft beschikbaar.';
+      }
       let ok = 0;
       for (const model of MODELS) {
         const result = data.results?.[model];
@@ -254,9 +289,13 @@ export function mountLocalComparison(config: Config): {
           if (turn !== current) return;
           rawResults[model] = drawing;
           for (const style of variants) {
+            if (style === 'u2adaptive' && !regionPixels) {
+              messages[style].textContent = 'Geen bruikbare regiokaart; kies Sticker.';
+              continue;
+            }
             chooseButtons[style].disabled = false;
             messages[style].textContent = model === 'u2net'
-              ? style === 'u2net' ? (result.elapsed_ms ?? '?') + ' ms · één U²-modeluitvoer' : 'Zelfde U²-uitvoer · lokale afwerking'
+              ? style === 'u2net' ? (result.elapsed_ms ?? '?') + ' ms · één U²-modeluitvoer' : style === 'u2adaptive' ? 'Zelfde U²-uitvoer · regionale afwerking' : 'Zelfde U²-uitvoer · lokale afwerking'
               : (result.elapsed_ms ?? '?') + ' ms · referentie';
           }
           ++ok;
@@ -270,7 +309,7 @@ export function mountLocalComparison(config: Config): {
       }
       renderPreviews();
       show(rawResults.u2net
-        ? 'Drie U²-afwerkingen klaar. Sticker staat als proefkeuze op het wezen.' + (includeReferences ? ' ' + (ok - 1) + '/4 referenties klaar.' : '')
+        ? (regionPixels ? 'Vier U²-afwerkingen klaar. ' : 'Drie U²-afwerkingen klaar; Adaptief niet beschikbaar. ') + 'Sticker blijft de standaard.' + (includeReferences ? ' ' + (ok - 1) + '/4 referenties klaar.' : '')
         : 'U²-Net is niet gelukt; bekijk de foutmeldingen. Beschikbare referenties blijven kiesbaar.');
     } catch (error) {
       if (turn !== current) return;
@@ -286,7 +325,7 @@ export function mountLocalComparison(config: Config): {
 
   for (const style of STYLES) {
     chooseButtons[style].addEventListener('click', () => {
-      if (!rawResults[modelFor(style)]) return;
+      if (!rawResults[modelFor(style)] || (style === 'u2adaptive' && !regionPixels)) return;
       selected = style;
       for (const other of STYLES) chooseButtons[other].setAttribute('aria-pressed', String(style === other));
       renderSelected();
@@ -296,13 +335,15 @@ export function mountLocalComparison(config: Config): {
   required<HTMLButtonElement>('local-reset-finish').addEventListener('click', () => {
     cutoffInput.value = '180';
     thicknessInput.value = '0';
+    hairInput.value = '1';
+    detailInput.value = '1';
     mode = 'ink';
     renderPreviews();
   });
   rawButton.addEventListener('click', () => { mode = 'raw'; renderPreviews(); });
   inkButton.addEventListener('click', () => { mode = 'ink'; renderPreviews(); });
   maskInput.addEventListener('change', renderPreviews);
-  for (const input of [cutoffInput, thicknessInput]) input.addEventListener('input', () => {
+  for (const input of [cutoffInput, thicknessInput, hairInput, detailInput]) input.addEventListener('input', () => {
     mode = 'ink';
     renderPreviews();
   });

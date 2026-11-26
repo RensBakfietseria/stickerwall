@@ -1,13 +1,22 @@
-# Stickerwall 0.6 — U² Focus
+# Stickerwall 0.7 — U² Adaptief
 
-Drie afwerkingen van één U²-Net Portrait-modeluitvoer, met de natuurlijke
-hoofdvorm uit Build 0.5. Basis, Bold en Sticker zijn vergelijkbaar op
-226 × 252 punten, en selecteerbaar voor hetzelfde dierenlichaam.
+## Evaluatie 0.6
+Drie lokale portretproeven: kaal met bril, lang haar met bril, krullend haar
+zonder bril. Bold geeft meer gezichtskracht, maar maakt vooral haar te donker.
+Sticker is de veiligste voorlopige standaard; Basis is soms te licht.
 
-Standaard alleen U²-Net en BiSeNet; Contour, Contour+, Anime en OpenSketch
-optioneel. Geen nieuwe modellen, geen cloud, geen wijziging van de
-printerbreedte. Detailinjectie geparkeerd. Sticker is de proefvoorkeur;
-artistieke kwaliteit moet nog op echte, lokale foto's worden beoordeeld.
+## Bouwopdracht
+Behoud Sticker exact en voeg één adaptieve proefvariant toe. Gebruik de
+bestaande BiSeNet-labels voor haar, gezichtsdetails en beschermde buitenrand.
+Haar niet laten dichtlopen; alleen aanwezige gezichtslijnen versterken.
+Behoud dezelfde hoofdvorm, U²-uitvoer, printerformaat en offline architectuur.
+Geen nieuwe modellen of afhankelijkheden. Vergelijk beide direct, met
+afzonderlijke regelaars. Basis en Bold blijven referenties.
 
-Update: stop de lokale server, voer `./update.cmd` uit en start opnieuw.
-Zie [lokale instructies](local_portrait/README.md).
+## Acceptatie
+Technisch: dezelfde alpha, nulinstellingen exact Sticker, geen extra
+modelinferentie, lokale browser en selecteerbare sticker. Artistiek:
+beoordeel opnieuw de drie oorspronkelijke foto's en de echte thermoprint.
+Geen automatische claim van kwaliteitswinst.
+
+[Update en technische instructies](local_portrait/README.md).

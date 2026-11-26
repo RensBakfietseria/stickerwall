@@ -1,4 +1,4 @@
-"""Cartoonlab 0.6: U2-Net first, optional original reference models.
+"""Cartoonlab 0.7: reuse semantic regions for adaptive print finishing.
 
 Only local CPU inference. One active ONNX session at a time.
 No image files, subprocesses, network calls or facial identification.
@@ -112,13 +112,14 @@ def compare(source, include_references=True):
     outputs = {style: result(lambda s=style: informative_drawings(source, s)) for style in STYLES[:3]} if include_references else {}
     begin = time.perf_counter()
     try:
-        isolated, mask = isolate(source, get_session("bisenet"))
+        isolated, mask, regions = isolate(source, get_session("bisenet"))
         outputs["isolated"] = {"ok": True, "png": base64.b64encode(_encode_png(isolated)).decode("ascii"),
                                "elapsed_ms": round((time.perf_counter() - begin) * 1000)}
     except Exception as exc:
         error = {"ok": False, "error": str(exc)}
         outputs.update({key: dict(error) for key in (("isolated", "contourplus", "u2net") if include_references else ("isolated", "u2net"))})
         return outputs
+    outputs["regions"] = result(lambda: _encode_png(regions))
     if include_references:
         outputs["contourplus"] = result(lambda: _encode_png(apply_silhouette(informative_image(isolated, "contour"), mask)))
     outputs["u2net"] = result(lambda: _encode_png(apply_silhouette(u2net_image(isolated), mask)))

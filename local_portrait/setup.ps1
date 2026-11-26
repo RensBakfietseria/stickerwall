@@ -33,5 +33,5 @@ if (!(Test-Path "node_modules\.bin\vite.cmd") -or ($env:STICKERWALL_REFRESH_NODE
 if ($LASTEXITCODE -ne 0) { throw "Stickerwall-build mislukt." }
 
 # No G'MIC download/execution or changes to Windows security.
-Write-Host "Cartoonlab 0.6 klaar: U2 Basis, Bold en Sticker." -ForegroundColor Green
+Write-Host "Cartoonlab 0.7 klaar: U2 Sticker en Adaptief." -ForegroundColor Green
 Write-Host "Internet mag uit. Start: powershell -ExecutionPolicy Bypass -File .\local_portrait\start.ps1"

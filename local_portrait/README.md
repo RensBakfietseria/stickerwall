@@ -1,6 +1,10 @@
-# Stickerwall 0.6 — U² Focus
+# Stickerwall 0.7 — U² Adaptief
 
 Vijf tekenvarianten: Contour, Contour+ (BiSeNet + Contour), U²-Net Portrait (met BiSeNet), OpenSketch en Anime. Alle verwerking lokaal op CPU. Geen G'MIC of PyTorch. APDrawingGAN++ blijft onderzocht, niet actief.
+
+## Build 0.7
+
+Sticker blijft ongewijzigd en standaard geselecteerd. Adaptief gebruikt de bestaande BiSeNet-labels uit dezelfde segmentatie: haar/hoed (rood), ogen, wenkbrauwen, bril, neus, mond en lippen (groen), beschermde buitenrand (blauw). De kaart is zichtbaar onder de oude referenties. Geen tweede AI-inferentie of nieuwe modellen. Afwerking op 226 × 252: in haar kan alleen bestaande Sticker-inkt worden verwijderd; in gezichtsdetails kan alleen een bestaande zwakke rand naast inkt worden versterkt. Buitenrand en alpha blijven gelijk; overige regio's blijven Sticker. Twee schuiven 0–2 (standaard 1) regelen haar en gezicht apart. Beide op nul reproduceert Sticker exact. Bij ontbrekende kaart blijft Sticker beschikbaar, Adaptief niet. Het is een experimentele afwerking, geen garantie op betere expressie. Test dezelfde drie portretten en fysieke prints lokaal.
 
 ## Build 0.6
 
@@ -80,7 +84,7 @@ op 127.0.0.1:8765. De server verwerkt pixels in geheugen; er zijn geen
 uitgaande API-aanroepen, tijdelijke portretbestanden of fotogalerij.
 De server bewaart geen requestlog. De browser heeft een restrictief CSP en
 weigert redirects voor modelrequests. De portretvergelijking werkt alleen
-met protocolversie 6 op de lokale server, niet op een externe Vercel-host.
+met protocolversie 7 op de lokale server, niet op een externe Vercel-host.
 Dit is ontwerp en technische test, geen volledige privacy- of securityaudit.
 Gebruik een eigen onbewerkte foto om de artistieke kwaliteit te beoordelen.
 

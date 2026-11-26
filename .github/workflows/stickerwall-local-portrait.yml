@@ -3,7 +3,7 @@ name: Sticky Wall local portrait engines
 on:
   push:
     branches:
-      - stickerwall-0-6-u2-focus
+      - stickerwall-0-7-adaptive
   pull_request:
     paths:
       - 'local_portrait/**'
@@ -32,7 +32,7 @@ jobs:
       - run: npm ci
       - run: npm run stickerwall:build
       - run: npm run typecheck
-      - run: npx vitest run test/stickerwall.test.ts test/stickerwall-ink.test.ts test/stickerwall-u2-finish.test.ts
+      - run: npx vitest run test/stickerwall.test.ts test/stickerwall-ink.test.ts test/stickerwall-u2-finish.test.ts test/stickerwall-u2-adaptive.test.ts
 
   engine-smoke:
     runs-on: windows-latest

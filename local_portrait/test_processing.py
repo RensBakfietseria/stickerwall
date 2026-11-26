@@ -11,7 +11,7 @@ from PIL import Image
 import processing
 import server
 from download_assets import git_blob_sha, ASSET_LIST, verified
-from head_mask import build_mask, head_classes, apply_silhouette
+from head_mask import build_mask, head_classes, apply_silhouette, finishing_regions
 
 
 class ProcessingTests(unittest.TestCase):
@@ -37,11 +37,11 @@ class ProcessingTests(unittest.TestCase):
 
     def test_focus_runs_only_one_u2_inference(self):
         with patch.object(processing, "get_session", return_value=object()), \
-             patch.object(processing, "isolate", return_value=(self.image, Image.new("L", self.image.size, 255))), \
+             patch.object(processing, "isolate", return_value=(self.image, Image.new("L", self.image.size, 255), Image.new("RGB", self.image.size))), \
              patch.object(processing, "u2net_image", return_value=self.image) as u2, \
              patch.object(processing, "informative_image") as refs:
             outputs = processing.compare(self.image, include_references=False)
-        self.assertEqual(set(outputs), {"isolated", "u2net"})
+        self.assertEqual(set(outputs), {"isolated", "u2net", "regions"})
         self.assertTrue(outputs["u2net"]["ok"])
         u2.assert_called_once()
         refs.assert_not_called()
@@ -67,6 +67,23 @@ class ProcessingTests(unittest.TestCase):
         self.assertEqual(out.getpixel((0,0))[3],0)
         self.assertEqual(out.getpixel((80,70)),(255,255,255,255))
         self.assertEqual(out.getpixel((41,60)),(0,0,0,255))
+
+    def test_finishing_regions_are_aligned_and_exclude_background(self):
+        labels = np.zeros((100, 100), dtype=np.uint8)
+        labels[10:90, 10:90] = 1
+        labels[10:30, 10:90] = 17
+        labels[40:45, 30:35] = 4
+        labels[40:45, 65:70] = 6
+        labels[70:75, 45:55] = 12
+        mask = build_mask(labels, (100,100))
+        regions = finishing_regions(labels, mask)
+        self.assertEqual(regions.size, mask.size)
+        self.assertEqual(regions.getpixel((50,20)), (255,0,0))
+        self.assertEqual(regions.getpixel((32,42)), (0,255,0))
+        self.assertEqual(regions.getpixel((50,72)), (0,255,0))
+        self.assertEqual(regions.getpixel((50,55)), (0,0,0))
+        self.assertEqual(regions.getpixel((0,0)), (0,0,0))
+        self.assertTrue(np.any(np.asarray(regions)[:,:,2] == 255))
 
     def test_invalid_mask_fails(self):
         with self.assertRaises(RuntimeError):

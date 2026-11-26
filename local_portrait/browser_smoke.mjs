@@ -21,7 +21,7 @@ try {
   for (let i = 0; i < 80; i++) {
     try {
       const status = await fetch(base + '/api/local/status').then(r => r.json());
-      if (status.protocol === 6) break;
+      if (status.protocol === 7) break;
     } catch {}
     if (i === 79) throw Error('local server startup failed');
     await new Promise(resolve => setTimeout(resolve, 250));
@@ -53,11 +53,11 @@ try {
   await page.waitForFunction(() => !document.querySelector('#portrait-controls').hidden);
   await page.$eval('#portrait-zoom', el => { el.value = '100'; el.dispatchEvent(new Event('input')); });
   await page.click('#local-compare-run');
-  await page.waitForFunction(() => ['u2net','u2bold','u2sticker'].every(s => !document.getElementById('local-select-'+s).disabled), {timeout: 120000});
+  await page.waitForFunction(() => ['u2net','u2bold','u2sticker','u2adaptive'].every(s => !document.getElementById('local-select-'+s).disabled), {timeout: 120000});
   assert(await page.$eval('#local-select-u2sticker', el => el.getAttribute('aria-pressed') === 'true'));
-  const variants = await page.evaluate(() => ['u2net','u2bold','u2sticker'].map(s => document.getElementById('local-preview-'+s).toDataURL()));
-  assert.equal(new Set(variants).size, 3, 'three distinct preset outputs from one model');
-  const binary = await page.evaluate(() => ['u2net','u2bold','u2sticker'].every(s => {
+  const variants = await page.evaluate(() => ['u2net','u2bold','u2sticker','u2adaptive'].map(s => document.getElementById('local-preview-'+s).toDataURL()));
+  assert(new Set(variants.slice(0,3)).size===3, 'three original preset outputs preserved');
+  const binary = await page.evaluate(() => ['u2net','u2bold','u2sticker','u2adaptive'].every(s => {
     const c = document.getElementById('local-preview-'+s);
     const data = c.getContext('2d').getImageData(0,0,c.width,c.height).data;
     return c.width === 226 && c.height === 252 && data.every(v => v===0 || v===255);
@@ -68,10 +68,18 @@ try {
       const c = document.getElementById('local-preview-'+id);
       return Array.from(c.getContext('2d').getImageData(0,0,c.width,c.height).data).filter((_,i)=>i%4===3);
     };
-    const a=alpha('u2net'), b=alpha('u2bold'), c=alpha('u2sticker');
-    return a.includes(0) && a.includes(255) && a.every((v,i)=>v===b[i] && v===c[i]);
+    const a=alpha('u2net'), b=alpha('u2bold'), c=alpha('u2sticker'), d=alpha('u2adaptive');
+    return a.includes(0) && a.includes(255) && a.every((v,i)=>v===b[i] && v===c[i] && v===d[i]);
   });
   assert(masksMatch, 'head alpha identical across all presets');
+  await page.$eval('#local-hair-relief', el => { el.value = '0'; el.dispatchEvent(new Event('input')); });
+  await page.$eval('#local-face-detail', el => { el.value = '0'; el.dispatchEvent(new Event('input')); });
+  assert.equal(await page.$eval('#local-preview-u2adaptive',c=>c.toDataURL()),await page.$eval('#local-preview-u2sticker',c=>c.toDataURL()));
+  await page.click('#local-reset-finish');
+  await page.click('#local-select-u2adaptive');
+  assert(await page.$eval('#local-select-u2adaptive',el=>el.getAttribute('aria-pressed')==='true'));
+  // Basis and Bold are in a collapsed reference panel; open before clicking.
+  await page.$eval('#local-select-u2bold', el => el.closest('details').open=true);
   const stickerBefore = await page.$eval('#sticker', el => el.toDataURL());
   await page.click('#local-select-u2bold');
   assert.notEqual(stickerBefore, await page.$eval('#sticker', el => el.toDataURL()));
@@ -79,10 +87,11 @@ try {
   assert.equal(posts, 1, 'preset selection and finishing do not rerun inference');
   assert.equal(compareUrls[0], base+'/api/local/compare');
   await page.click('#local-reset-finish');
-  assert.deepEqual(await page.evaluate(() => ['u2net','u2bold','u2sticker'].map(s => document.getElementById('local-preview-'+s).toDataURL())),variants);
+  assert.deepEqual(await page.evaluate(() => ['u2net','u2bold','u2sticker','u2adaptive'].map(s => document.getElementById('local-preview-'+s).toDataURL())),variants);
   await page.click('#local-mode-raw');
   assert.equal(await page.$eval('#local-preview-u2net',el=>el.width),512);
   assert.equal(await page.$eval('#local-preview-u2bold',el=>el.width),226);
+  assert.equal(await page.$eval('#local-preview-u2adaptive',el=>el.width),226);
   await page.click('#local-mode-ink');
   await page.click('#local-include-references');
   await page.click('#local-compare-run');
@@ -94,9 +103,11 @@ try {
   assert(await page.$eval('#portrait-controls', el => el.hidden));
   assert(await page.$eval('#local-select-contour', el => el.disabled));
   assert.equal(await page.$eval('#local-original', c => c.getContext('2d').getImageData(0,0,c.width,c.height).data.some(x=>x!==0)), false);
+  assert(await page.$eval('#local-select-u2adaptive',el=>el.disabled));
+  assert.equal(await page.$eval('#local-regions',c=>c.getContext('2d').getImageData(0,0,c.width,c.height).data.some(x=>x!==0)),false);
   assert.deepEqual(external, [], 'no outbound browser requests');
   assert.deepEqual(pageErrors, [], 'no browser runtime errors');
-  console.log('PASS: three U2 presets, shared alpha, default focus, optional references, reset, local sticker selection, no outbound requests.');
+  console.log('PASS: four U2 presets, adaptive controls, shared alpha, default focus, optional references, reset, local sticker selection, no outbound requests.');
 } finally {
   if (browser) await browser.close();
   server.kill();

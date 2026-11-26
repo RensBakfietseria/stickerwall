@@ -74,6 +74,25 @@ def build_mask(labels, size):
     return mask
 
 
+def finishing_regions(labels, mask):
+    """RGB diagnostic: red hair/hat, green facial features, blue silhouette edge.
+    Regions are derived from the same semantic inference; no identity analysis.
+    Unclassified areas retain the ordinary Sticker treatment.
+    """
+    import numpy as np
+    size = mask.size
+    inside = np.asarray(mask) > 127
+    hair = Image.fromarray(np.isin(labels, [17, 18]).astype(np.uint8)*255, "L")
+    hair = hair.resize(size, Image.Resampling.NEAREST)
+    hair = np.asarray(hair) > 127
+    # Brows, eyes, glasses, nose, mouth and lips, with a small local margin.
+    features = Image.fromarray(np.isin(labels, [2,3,4,5,6,10,11,12,13]).astype(np.uint8)*255, "L")
+    features = features.resize(size, Image.Resampling.NEAREST).filter(ImageFilter.MaxFilter(13))
+    detail = (np.asarray(features) > 127) & ~hair
+    edge = inside & ~(np.asarray(mask.filter(ImageFilter.MinFilter(9))) > 127)
+    return Image.fromarray(np.stack([hair & inside, detail & inside, edge], axis=-1).astype(np.uint8)*255, "RGB")
+
+
 def isolate(source, session):
     import numpy as np
     tensor = normalized_tensor(source)
@@ -81,9 +100,10 @@ def isolate(source, session):
                                   {session.get_inputs()[0].name: tensor})[0])
     if output.shape != (1, 19, 512, 512) or not np.isfinite(output).all():
         raise RuntimeError("Onverwachte BiSeNet-uitvoer.")
-    mask = build_mask(output[0].argmax(axis=0), source.size)
+    labels = output[0].argmax(axis=0)
+    mask = build_mask(labels, source.size)
     white = Image.new("RGB", source.size, "white")
-    return Image.composite(source.convert("RGB"), white, mask), mask
+    return Image.composite(source.convert("RGB"), white, mask), mask, finishing_regions(labels, mask)
 
 
 def apply_silhouette(drawing, mask, outline=True):
