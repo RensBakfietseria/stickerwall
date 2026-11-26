@@ -9,6 +9,7 @@ import { drawSticker } from './artwork.ts';
 import { makePortraitStyles, PORTRAIT_STYLES, type Crop, type PortraitStyle } from './portrait.ts';
 import { mountLocalComparison } from './local-comparison.ts';
 import { mountCartoonLab } from './cartoon-lab.ts';
+import { mountCollectibles } from './collectible-lab.ts';
 import { CREATURES, QUALITIES, type Creature, type Quality, creatureName, toggleQuality } from './model.ts';
 
 function el<T extends HTMLElement>(id: string): T {
@@ -62,6 +63,7 @@ function renderChoices(): void {
       qualities = toggleQuality(qualities, quality);
       render();
       cartoonLab.refreshBodies();
+      collectibles.refresh();
     });
     qualityRoot.append(button);
   }
@@ -77,6 +79,7 @@ function renderChoices(): void {
       creature = item.id;
       render();
       cartoonLab.refreshBodies();
+      collectibles.refresh();
     });
     creatureRoot.append(button);
   }
@@ -167,7 +170,10 @@ const cartoonLab = mountCartoonLab({
   },
 });
 
+const collectibles = mountCollectibles({getImage: () => photo,getCrop:cropOptions,getCreature:()=>creature,getQualities:()=>qualities});
+
 function clearPhoto(): void {
+  collectibles.clear();
   cartoonLab.clearResults();
   ++fileSelection;
   if (scheduled !== null) cancelAnimationFrame(scheduled);
@@ -208,6 +214,7 @@ photoFile.addEventListener('change', async () => {
     }
     photo?.close();
     photo = bitmap;
+    collectibles.clear();
     portraitStyles = null;
     localComparison.reset();
     photoControls.hidden = false;
@@ -239,6 +246,7 @@ for (const button of styleButtons) {
   });
 }
 window.addEventListener('pagehide', () => {
+  collectibles.clear();
   cartoonLab.clearResults();
   photo?.close();
   photo = null;

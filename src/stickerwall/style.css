@@ -94,3 +94,20 @@ footer{max-width:1280px;padding:22px 34px;margin:0 auto;border-top:1px solid #d6
 .cartoon-lab[hidden]{display:none}
 @media(max-width:600px){.cartoon-slots,.cartoon-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:400px){.cartoon-slots,.cartoon-grid{grid-template-columns:1fr}}
+
+/* Collectibles: display the two sides together, compare six actual canvas designs. */
+.collectible-lab[hidden]{display:none}
+.collectible-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}
+.collectible-fields label{font-size:12px;font-weight:600;display:flex;flex-direction:column;gap:6px;min-width:0}
+.collectible-fields .local-mask{flex-direction:row;align-items:center}
+.collectible-fields input:not([type=checkbox]),.collectible-fields select,.collectible-fields textarea{max-width:100%;min-width:0;border:1px solid #c9c1b4;background:#fff;border-radius:6px;padding:8px;font:inherit;color:#24231f}
+.collectible-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;padding:12px;background:#e8e3d8;border-radius:10px}
+.collectible-pair h3{margin:0 0 8px;font-size:13px}
+.collectible-pair canvas,.collectible-thumb canvas{display:block;width:100%;height:auto;box-shadow:0 2px 6px #0002;background:#fff}
+.collectible-designs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:10px 0 18px}
+.collectible-thumb{background:#fff;border:1px solid #d6cec1;border-radius:7px;padding:7px;min-width:0;display:flex;flex-direction:column}
+.collectible-thumb p{font-size:11px;line-height:1.35;margin:8px 0;flex:1}
+.collectible-thumb .button{width:100%;padding:6px}
+.collectible-exports{flex-wrap:wrap}
+@media(max-width:600px){.collectible-designs{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:400px){.collectible-fields{grid-template-columns:1fr}}

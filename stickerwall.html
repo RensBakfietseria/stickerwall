@@ -11,7 +11,7 @@
   <body>
     <header class="top">
       <div class="wordmark">STICKERWALL<span class="dot">.</span></div>
-      <div class="tag">PROEFATELIER <strong>0.8</strong></div>
+      <div class="tag">PROEFATELIER <strong>0.9</strong></div>
     </header>
     <main>
       <section class="intro">
@@ -184,6 +184,46 @@
               <p class="footnote">U² Adaptief gebruikt standaardwaarden 180 / 0 / 1 / 1. De cartoons gebruiken de originele BiSeNet-hoofdvorm; Cartoon → U² gebruikt Sticker-afwerking, direct gebruikt een vaste drempel van 145. De oude schuiven gelden alleen voor 03B. Cartoonresultaten worden niet opgeslagen. Beide cartoonmodellen zijn experimenteel.</p>
             </div>
             <p class="footnote">Gewone foto's worden niet bewaard; alleen expliciet ingestelde testuitsneden blijven lokaal staan. Bij lokaal vergelijken gaat de uitsnede uitsluitend naar 127.0.0.1; geen cloud-AI.</p>
+          </section>
+          <section class="panel collectible-lab" id="collectible-lab" aria-labelledby="collectible-title">
+            <div class="step">04 / STICKY WALL COLLECTIBLES</div>
+            <h2 id="collectible-title">Een kaart om te bewaren</h2>
+            <p>Een lokaal gekleurd animehoofd, als uitgeknipte collage op het bestaande dierenlichaam. Vergelijk drie kaartstijlen met en zonder kleuraccenten.</p>
+            <div class="actions">
+              <button type="button" class="button dark" id="collectible-batch" disabled>Maak kaarten van vaste testset</button>
+              <button type="button" class="button light" id="collectible-current" disabled>Maak kaart van huidige foto</button>
+            </div>
+            <p id="collectible-status" class="status" role="status">Lokale modellen controleren…</p>
+            <div class="collectible-fields">
+              <label>Portret<select id="collectible-person"></select></label>
+              <label>Kaartformaat<select id="collectible-format"><option value="trading">63 × 88 mm · tradingcard</option><option value="postcard">100 × 150 mm · groot</option></select></label>
+              <label>Ontwerp<select id="collectible-layout"><option value="atelier">Atelier</option><option value="club">Club</option><option value="archive">Archief</option></select></label>
+              <label class="local-mask"><input type="checkbox" id="collectible-accent" /> Kleuraccent op dierenlichaam</label>
+            </div>
+            <div class="collectible-pair">
+              <div><h3>Voorzijde</h3><canvas id="collectible-front" width="315" height="440" aria-label="Voorzijde kaart"></canvas></div>
+              <div><h3>Achterzijde</h3><canvas id="collectible-back" width="315" height="440" aria-label="Achterzijde kaart"></canvas></div>
+            </div>
+            <h3>Achterkant personaliseren</h3>
+            <div class="collectible-fields">
+              <label>Organisatie of evenement<input id="collectible-brand" maxlength="60" placeholder="Een kaart om te bewaren" /></label>
+              <label>Logo (lokaal)<input id="collectible-logo" type="file" accept="image/png,image/jpeg,image/webp" /></label>
+              <button id="collectible-clear-logo" class="button light" type="button" disabled>Verwijder logo</button>
+              <label>Tekst<textarea id="collectible-message" rows="3" maxlength="160" placeholder="Iedereen heeft iets bijzonders. Welke kwaliteit zie jij in een ander?"></textarea></label>
+            </div>
+            <h3>Vergelijk de zes ontwerpen</h3>
+            <div class="collectible-designs" id="collectible-designs"></div>
+            <h3>Dezelfde keuze op de testportretten</h3>
+            <div class="collectible-designs" id="collectible-profiles"></div>
+            <h3>Printbestanden · 300 ppi</h3>
+            <div class="actions collectible-exports">
+              <button class="button light" type="button" id="collectible-png-front" disabled>PNG voorzijde</button>
+              <button class="button light" type="button" id="collectible-png-back" disabled>PNG achterzijde</button>
+              <button class="button dark" type="button" id="collectible-pdf" disabled>PDF kaart (2 zijden)</button>
+              <button class="button dark" type="button" id="collectible-sheet" disabled>PDF A4-printvel</button>
+            </div>
+            <p class="footnote">A4: zes tradingcards (beschikbare testportretten herhaald) of één grote kaart. Twee pagina's met snijmarkeringen; achterzijde gespiegeld qua positie voor omslaan over de lange zijde. Print op 100%, niet passend maken. Test de uitlijning op gewoon papier. Geen automatische printeraansturing, geen afloop buiten de kaart. Exporteer alleen met toestemming; kaartbestanden worden niet automatisch bewaard.</p>
+            <button type="button" class="button light" id="collectible-clear" disabled>Wis kaartresultaten</button>
           </section>
           <section class="panel" aria-labelledby="print-title">
             <div class="step">04 / AFDRUKKEN</div>
