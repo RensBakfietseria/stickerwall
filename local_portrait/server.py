@@ -18,10 +18,10 @@ from threading import BoundedSemaphore
 from PIL import Image, UnidentifiedImageError
 
 try:
-    from .processing import compare, readiness
+    from .processing import compare, readiness, collectible
     from . import testset
 except ImportError:
-    from processing import compare, readiness
+    from processing import compare, readiness, collectible
     import testset
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -79,7 +79,7 @@ class Handler(BaseHTTPRequestHandler):
             return
         route = urlsplit(self.path).path
         if route == "/api/local/status":
-            self._json(200, {"local": True, "protocol": 8, "engines": readiness()})
+            self._json(200, {"local": True, "protocol": 9, "engines": readiness()})
             return
         if route.startswith("/api/local/testset/"):
             try:
@@ -147,6 +147,9 @@ class Handler(BaseHTTPRequestHandler):
                 return
             # Ordinary inference remains in memory. Only explicit testset POSTs save.
             query = parse_qs(urlsplit(self.path).query)
+            if query.get("collectible")==["1"]:
+                self._json(200, {"result": collectible(source)})
+                return
             self._json(200, {"results": compare(source, include_references=query.get("references")==["1"], include_cartoons=query.get("cartoons")==["1"])})
         finally:
             INFERENCE_LOCK.release()
@@ -168,7 +171,7 @@ def main():
         raise SystemExit("Build ontbreekt: voer eerst npm run stickerwall:build uit.")
     server = ThreadingHTTPServer((HOST, PORT), Handler)
     print(f"Sticky Wall lokaal: http://{HOST}:{PORT}/stickerwall.html")
-    print("Cartoonlab 0.8: Cartoon First, vaste lokale testset. Geen cloud-API.")
+    print("Collectibles 0.9: kleurkaarten, vaste lokale testset. Geen cloud-API.")
     try:
         server.serve_forever()
     except KeyboardInterrupt:

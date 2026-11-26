@@ -112,6 +112,25 @@ def result(worker):
         return {"ok": False, "error": str(exc)}
 
 
+def collectible(source):
+    """Only the existing two models; return transparent color and chin anchor."""
+    from collectible_head import make_collectible
+    begin = time.perf_counter()
+    try:
+        # Keep a single active model session; release parsing before anime.
+        from head_mask import parse_labels
+        from collectible_head import prepare_collage
+        from PIL import ImageFilter
+        labels = parse_labels(source, get_session("bisenet"))
+        isolated, mask, anchor = prepare_collage(source, labels)
+        color = cartoon_image(isolated, mask, get_session("animegan"), "animegan").convert("RGBA")
+        color.putalpha(mask.filter(ImageFilter.GaussianBlur(0.65)))
+        return {"ok": True, "png": base64.b64encode(_encode_png(color)).decode("ascii"),
+                "anchor": anchor, "elapsed_ms": round((time.perf_counter()-begin)*1000)}
+    except Exception as exc:
+        return {"ok":False,"error":str(exc)}
+
+
 def compare(source, include_references=True, include_cartoons=False):
     outputs = {style: result(lambda s=style: informative_drawings(source, s)) for style in STYLES[:3]} if include_references else {}
     begin = time.perf_counter()

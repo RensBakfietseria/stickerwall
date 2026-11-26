@@ -93,14 +93,18 @@ def finishing_regions(labels, mask):
     return Image.fromarray(np.stack([hair & inside, detail & inside, edge], axis=-1).astype(np.uint8)*255, "RGB")
 
 
-def isolate(source, session):
+def parse_labels(source, session):
     import numpy as np
     tensor = normalized_tensor(source)
     output = np.asarray(session.run([session.get_outputs()[0].name],
                                   {session.get_inputs()[0].name: tensor})[0])
     if output.shape != (1, 19, 512, 512) or not np.isfinite(output).all():
         raise RuntimeError("Onverwachte BiSeNet-uitvoer.")
-    labels = output[0].argmax(axis=0)
+    return output[0].argmax(axis=0)
+
+
+def isolate(source, session):
+    labels = parse_labels(source, session)
     mask = build_mask(labels, source.size)
     white = Image.new("RGB", source.size, "white")
     return Image.composite(source.convert("RGB"), white, mask), mask, finishing_regions(labels, mask)

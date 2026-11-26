@@ -158,7 +158,7 @@ export function mountCartoonLab(config:Config):{clearResults:()=>void; refreshBo
   }
   async function save(slot:Slot,source:Blob){
     await checked(await localFetch('/api/local/testset/'+slot,{method:'POST',headers:{'Content-Type':'image/png'},body:source}));
-    await refresh(slot);clearResults();sync();
+    await refresh(slot);clearResults();sync();window.dispatchEvent(new Event('stickerwall-testset-change'));
   }
   async function mutate(fn:()=>Promise<void>){
     if(busy||!ready)return;busy=true;sync();
@@ -189,7 +189,7 @@ export function mountCartoonLab(config:Config):{clearResults:()=>void; refreshBo
     }));
     const remove=document.createElement('button');remove.type='button';remove.className='button light';remove.textContent='Wis testfoto';
     remove.addEventListener('click',()=>void mutate(async()=>{
-      await checked(await localFetch('/api/local/testset/'+slot,{method:'DELETE'}));await refresh(slot);clearResults();
+      await checked(await localFetch('/api/local/testset/'+slot,{method:'DELETE'}));await refresh(slot);clearResults();window.dispatchEvent(new Event('stickerwall-testset-change'));
     }));
     controls.push(choose,saveCrop,remove);item.card.append(file,choose,saveCrop,remove);
   }
@@ -206,7 +206,7 @@ export function mountCartoonLab(config:Config):{clearResults:()=>void; refreshBo
   void (async()=>{
     try{
       const info=await (await checked(await localFetch('/api/local/status'))).json();
-      if(info.protocol!==8)throw Error('Start eerst de 0.8-server.');
+      if(info.protocol!==9)throw Error('Start eerst de 0.9-server.');
       for(const [slot] of SLOTS)await refresh(slot);
       ready=true;show(slots.size+'/3 testportretten ingesteld · kies een foto of vergelijk de vaste set.');
     }catch(error){show(message(error));}
