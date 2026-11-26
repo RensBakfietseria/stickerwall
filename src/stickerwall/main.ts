@@ -8,6 +8,7 @@ import type { Raster } from '../types.ts';
 import { drawSticker } from './artwork.ts';
 import { makePortraitStyles, PORTRAIT_STYLES, type Crop, type PortraitStyle } from './portrait.ts';
 import { mountLocalComparison } from './local-comparison.ts';
+import { mountCartoonLab } from './cartoon-lab.ts';
 import { CREATURES, QUALITIES, type Creature, type Quality, creatureName, toggleQuality } from './model.ts';
 
 function el<T extends HTMLElement>(id: string): T {
@@ -143,7 +144,20 @@ const localComparison = mountLocalComparison({
   },
 });
 
+const cartoonLab = mountCartoonLab({
+  getImage: () => photo,
+  getCrop: cropOptions,
+  getCreature: () => creature,
+  getQualities: () => qualities,
+  onSelect: (head) => {
+    localComparison.deselect();
+    selectedLocalPortrait = head;
+    render();
+  },
+});
+
 function clearPhoto(): void {
+  cartoonLab.clearResults();
   ++fileSelection;
   if (scheduled !== null) cancelAnimationFrame(scheduled);
   scheduled = null;
@@ -214,6 +228,7 @@ for (const button of styleButtons) {
   });
 }
 window.addEventListener('pagehide', () => {
+  cartoonLab.clearResults();
   photo?.close();
   photo = null;
   portraitStyles = null;

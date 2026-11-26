@@ -82,3 +82,15 @@ footer{max-width:1280px;padding:22px 34px;margin:0 auto;border-top:1px solid #d6
 .u2-candidates{grid-template-columns:repeat(2,minmax(0,1fr))}
 .local-adaptive-controls{border-top:1px solid #d7cec2;padding-top:12px;margin-top:8px}
 @media(max-width:400px){.u2-candidates{grid-template-columns:1fr}}
+
+/* Build 0.8: private fixture slots and side-by-side cartoon pipeline. */
+.cartoon-slots{grid-template-columns:repeat(3,minmax(0,1fr))}
+.cartoon-slots .button{margin-top:5px;padding:8px 5px}
+.cartoon-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.cartoon-row{border-top:1px solid #d7cec2;padding-top:12px;margin:16px 0}
+.cartoon-row h4{font-size:14px;margin:0 0 10px}
+.cartoon-card canvas{object-fit:contain;aspect-ratio:auto}
+.cartoon-card strong{min-height:32px;line-height:1.3}
+.cartoon-lab[hidden]{display:none}
+@media(max-width:600px){.cartoon-slots,.cartoon-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:400px){.cartoon-slots,.cartoon-grid{grid-template-columns:1fr}}

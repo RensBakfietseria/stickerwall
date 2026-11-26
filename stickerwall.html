@@ -11,13 +11,13 @@
   <body>
     <header class="top">
       <div class="wordmark">STICKERWALL<span class="dot">.</span></div>
-      <div class="tag">PROEFATELIER <strong>0.7</strong></div>
+      <div class="tag">PROEFATELIER <strong>0.8</strong></div>
     </header>
     <main>
       <section class="intro">
         <p class="eyebrow">EEN KLEIN EXPERIMENT IN GROTE COMPLIMENTEN</p>
         <h1>Geef iemands kwaliteiten <em>een gezicht.</em></h1>
-        <p>Eén lokaal getekend hoofd. Vergelijk Sticker met Adaptief: minder dichtgelopen haar en sterker gezicht.</p>
+        <p>Cartoon First: vergelijk eerst de cartoon en daarna de zwart-witsticker.</p>
       </section>
       <div class="workspace">
         <div class="controls">
@@ -168,7 +168,22 @@
                 <p class="footnote">Alleen de verkleinde uitsnede gaat naar de server op 127.0.0.1. Geen externe AI of opslag van portretfoto’s.</p>
               </div>
             </div>
-            <p class="footnote">Na verwijderen of herladen bewaart het Proefatelier geen foto. Bij lokaal vergelijken gaat de uitsnede uitsluitend naar 127.0.0.1; geen cloud-AI.</p>
+            <div class="local-compare cartoon-lab" id="cartoon-lab">
+              <div class="step">03C / CARTOON FIRST · VASTE TESTSET</div>
+              <h3>Drie vaste portretten, één vergelijking</h3>
+              <p>Ontwikkelmodus: kies éénmalig drie testfoto's waarvoor je toestemming hebt. Alleen de vaste uitsnede wordt lokaal bewaard (512 × 576); geen bezoekersfoto's automatisch opslaan. Testfoto's blijven bij updates behouden.</p>
+              <div class="local-candidates cartoon-slots" id="cartoon-slots"></div>
+              <p class="helper">Met 'Kies testfoto' wordt automatisch centraal uitgesneden. Voor precieze kadrering: kies een foto in Hoofdlab, pas de uitsnede aan en klik 'Bewaar huidige uitsnede' bij de juiste plek.</p>
+              <div class="photo-action">
+                <button class="button dark" type="button" id="cartoon-batch" disabled>Vergelijk alle drie</button>
+                <button class="button light" type="button" id="cartoon-current" disabled>Vergelijk huidige foto</button>
+              </div>
+              <label class="local-mask"><input type="checkbox" id="cartoon-body" /> Toon eindresultaten op het gekozen dier</label>
+              <p class="status" id="cartoon-status" role="status">Lokale testset laden…</p>
+              <div id="cartoon-results"></div>
+              <p class="footnote">U² Adaptief gebruikt standaardwaarden 180 / 0 / 1 / 1. De cartoons gebruiken de originele BiSeNet-hoofdvorm; Cartoon → U² gebruikt Sticker-afwerking, direct gebruikt een vaste drempel van 145. De oude schuiven gelden alleen voor 03B. Cartoonresultaten worden niet opgeslagen. Beide cartoonmodellen zijn experimenteel.</p>
+            </div>
+            <p class="footnote">Gewone foto's worden niet bewaard; alleen expliciet ingestelde testuitsneden blijven lokaal staan. Bij lokaal vergelijken gaat de uitsnede uitsluitend naar 127.0.0.1; geen cloud-AI.</p>
           </section>
           <section class="panel" aria-labelledby="print-title">
             <div class="step">04 / AFDRUKKEN</div>
