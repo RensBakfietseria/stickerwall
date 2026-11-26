@@ -31,7 +31,7 @@ try{
   }
   await page.click('#collectible-batch');
   await page.waitForFunction(()=>!document.querySelector('#collectible-pdf').disabled,{timeout:180000});
-  assert.equal(await page.$eval('#composition-designs canvas',cs=>cs.length),0,'closed comparison is not rendered');
+  assert.equal(await page.evaluate(()=>document.querySelectorAll('#composition-designs canvas').length),0,'closed comparison is not rendered');
   await page.evaluate(()=>['compare-bodies','compare-layouts','compare-profiles'].forEach(id=>document.getElementById(id).open=true));
   await page.waitForFunction(()=>document.querySelectorAll('#collectible-profiles canvas').length===3&&!document.querySelector('#collectible-pdf').disabled,{timeout:180000});
   const six=await page.$$eval('#collectible-designs canvas',cs=>cs.map(c=>c.toDataURL()));
@@ -67,7 +67,7 @@ try{
   await page.waitForFunction(()=>!document.querySelector('#fantasy-add').disabled);
   await page.click('#fantasy-preset');
   assert.equal(await page.$eval('#composition-body',e=>e.value),'A-octopus');
-  assert.equal(await page.$eval('#fantasy-active option',opts=>opts.length),2);
+  assert.equal(await page.evaluate(()=>document.querySelectorAll('#fantasy-active option').length),2);
   await page.select('#fantasy-active','crown');
   const withCrown=await page.$eval('#collectible-front',c=>c.toDataURL());
   await page.$eval('#fantasy-x',e=>{e.value='50';e.dispatchEvent(new Event('input'));});
@@ -78,9 +78,9 @@ try{
   assert.equal(parts['A-octopus'].find(p=>p.id==='crown').x,50);
   assert.equal(parts['A-octopus'].find(p=>p.id==='crown').layer,'behind-head');
   await page.select('#fantasy-choice','flower');await page.click('#fantasy-add');
-  assert.equal(await page.$eval('#fantasy-active option',opts=>opts.length),3);
+  assert.equal(await page.evaluate(()=>document.querySelectorAll('#fantasy-active option').length),3);
   await page.click('#fantasy-remove');
-  assert.equal(await page.$eval('#fantasy-active option',opts=>opts.length),2);
+  assert.equal(await page.evaluate(()=>document.querySelectorAll('#fantasy-active option').length),2);
   await page.select('#collectible-layout','club');
   await page.click('#collectible-accent');
   const front=await page.$eval('#collectible-front',c=>c.toDataURL());
