@@ -1,4 +1,5 @@
 import { drawSticker } from './artwork.ts';
+import { canvasToRaster, rasterToCanvas } from '../raster.ts';
 import { type Creature, type Quality } from './model.ts';
 import { makePortraitInput, type Crop } from './portrait.ts';
 import { finishAdaptive } from './u2-adaptive.ts';
@@ -9,7 +10,7 @@ const SLOTS = [['kaal-bril','Kaal + bril'],['lang-haar','Lang haar + bril'],['kr
 type Slot = typeof SLOTS[number][0];
 type ModelResult = {ok: boolean; png?: string; error?: string; elapsed_ms?: number};
 type Results = Record<string,ModelResult | undefined>;
-type Config = {getImage:()=>ImageBitmap|null; getCrop:()=>Crop; getCreature:()=>Creature; getQualities:()=>readonly Quality[]; onSelect:(head:HTMLCanvasElement)=>void};
+type Config = {getImage:()=>ImageBitmap|null; getCrop:()=>Crop; getCreature:()=>Creature; getQualities:()=>readonly Quality[]; onSelect:(head:HTMLCanvasElement)=>void; onClear:()=>void};
 type Preview = {canvas:HTMLCanvasElement; head:HTMLCanvasElement};
 function el<T extends HTMLElement>(id:string):T {
   const value=document.getElementById(id);
@@ -51,7 +52,7 @@ async function checked(response:Response):Promise<Response>{
 }
 const localFetch=(path:string,init:RequestInit={})=>fetch(path,{...init,cache:'no-store',redirect:'error'});
 
-export function mountCartoonLab(config:Config):{clearResults:()=>void}{
+export function mountCartoonLab(config:Config):{clearResults:()=>void; refreshBodies:()=>void}{
   const root=el<HTMLElement>('cartoon-lab'),status=el<HTMLParagraphElement>('cartoon-status');
   const batch=el<HTMLButtonElement>('cartoon-batch'),current=el<HTMLButtonElement>('cartoon-current');
   const bodyToggle=el<HTMLInputElement>('cartoon-body');
@@ -69,12 +70,15 @@ export function mountCartoonLab(config:Config):{clearResults:()=>void}{
   }
   function clearResults(){
     ++serial;controller?.abort();controller=null;
-    previews.length=0;resultRoot.replaceChildren();
+    previews.length=0;resultRoot.replaceChildren();config.onClear();
     // Keep busy until an outstanding request has actually settled.
     sync();
   }
+  function stickerPreview(head:HTMLCanvasElement){
+    return rasterToCanvas(canvasToRaster(drawSticker(config.getCreature(),config.getQualities(),head),{dither:'threshold'}));
+  }
   function showBodies(){
-    for(const p of previews)copy(p.canvas,bodyToggle.checked?drawSticker(config.getCreature(),config.getQualities(),p.head):p.head);
+    for(const p of previews)copy(p.canvas,bodyToggle.checked?stickerPreview(p.head):p.head);
   }
   bodyToggle.addEventListener('change',showBodies);
   function card(grid:HTMLElement,title:string):{card:HTMLDivElement;desc:HTMLParagraphElement;c:HTMLCanvasElement}{
@@ -121,7 +125,7 @@ export function mountCartoonLab(config:Config):{clearResults:()=>void}{
         const b=document.createElement('button');b.type='button';b.className='button light';b.textContent='Gebruik op sticker';
         b.addEventListener('click',()=>config.onSelect(head));item.card.append(b);
         previews.push({canvas:item.c,head});
-        copy(item.c,bodyToggle.checked?drawSticker(config.getCreature(),config.getQualities(),head):head);
+        copy(item.c,bodyToggle.checked?stickerPreview(head):head);
         item.desc.textContent=kind==='direct'?'Vaste zwart-witdrempel 145':kind==='adaptive'?'Standaard 180 / 0 / 1 / 1':'U² Sticker-afwerking 180 / 0';
       }catch(error){item.desc.textContent=message(error);}
     }
@@ -154,7 +158,7 @@ export function mountCartoonLab(config:Config):{clearResults:()=>void}{
   }
   async function save(slot:Slot,source:Blob){
     await checked(await localFetch('/api/local/testset/'+slot,{method:'POST',headers:{'Content-Type':'image/png'},body:source}));
-    await refresh(slot);sync();
+    await refresh(slot);clearResults();sync();
   }
   async function mutate(fn:()=>Promise<void>){
     if(busy||!ready)return;busy=true;sync();
@@ -197,7 +201,7 @@ export function mountCartoonLab(config:Config):{clearResults:()=>void}{
   batch.addEventListener('click',()=>void run(SLOTS.flatMap(([slot,label])=>{const source=slots.get(slot);return source?[{label,source}]:[];})));
   sync();
   if(location.origin!=='http://127.0.0.1:8765'&&location.origin!=='http://localhost:8765'){
-    root.hidden=true;return {clearResults};
+    root.hidden=true;return {clearResults,refreshBodies:showBodies};
   }
   void (async()=>{
     try{
@@ -208,5 +212,5 @@ export function mountCartoonLab(config:Config):{clearResults:()=>void}{
     }catch(error){show(message(error));}
     finally{sync();}
   })();
-  return {clearResults};
+  return {clearResults,refreshBodies:showBodies};
 }

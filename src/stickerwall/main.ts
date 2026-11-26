@@ -61,6 +61,7 @@ function renderChoices(): void {
     button.addEventListener('click', () => {
       qualities = toggleQuality(qualities, quality);
       render();
+      cartoonLab.refreshBodies();
     });
     qualityRoot.append(button);
   }
@@ -75,6 +76,7 @@ function renderChoices(): void {
     button.addEventListener('click', () => {
       creature = item.id;
       render();
+      cartoonLab.refreshBodies();
     });
     creatureRoot.append(button);
   }
@@ -144,6 +146,7 @@ const localComparison = mountLocalComparison({
   },
 });
 
+let activeCartoonHead: HTMLCanvasElement | null = null;
 const cartoonLab = mountCartoonLab({
   getImage: () => photo,
   getCrop: cropOptions,
@@ -152,7 +155,15 @@ const cartoonLab = mountCartoonLab({
   onSelect: (head) => {
     localComparison.deselect();
     selectedLocalPortrait = head;
+    activeCartoonHead = head;
     render();
+  },
+  onClear: () => {
+    if (activeCartoonHead && selectedLocalPortrait === activeCartoonHead) {
+      selectedLocalPortrait = null;
+      render();
+    }
+    activeCartoonHead = null;
   },
 });
 

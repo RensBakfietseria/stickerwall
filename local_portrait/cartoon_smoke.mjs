@@ -58,6 +58,7 @@ try{
   const before=await page.$eval('#sticker',c=>c.toDataURL());
   await page.click('.cartoon-row .cartoon-card:nth-child(4) button');
   assert.notEqual(await page.$eval('#sticker',c=>c.toDataURL()),before);
+  const selected=await page.$eval('#sticker',c=>c.toDataURL());
   await page.waitForFunction(()=>!document.querySelector('#cartoon-current').disabled);
   for(const slot of slots){
     const button=await page.$('#cartoon-file-'+slot);
@@ -67,6 +68,7 @@ try{
     assert.equal((await fetch(base+'/api/local/testset/'+slot)).status,404);
   }
   assert(await page.$eval('#cartoon-batch',b=>b.disabled));
+  assert.notEqual(await page.$eval('#sticker',c=>c.toDataURL()),selected,'deleted test result removed from active sticker');
   assert.deepEqual(external,[]);assert.deepEqual(errors,[]);
   console.log('PASS: three persistent private fixture slots, reload, sequential batch, both real cartoon routes, sticker preview/selection, delete, zero external requests.');
 }finally{
