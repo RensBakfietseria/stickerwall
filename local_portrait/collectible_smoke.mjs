@@ -50,7 +50,7 @@ try{
   const packPath=join(out,'illustration-test.json');writeFileSync(packPath,art);
   const packInput=await page.$('#composition-import');await packInput.uploadFile(packPath);
   await page.waitForFunction(()=>document.querySelectorAll('#composition-designs canvas').length===8);
-  const all=await page.$eval('#composition-designs canvas',cs=>cs.map(c=>c.toDataURL()));
+  const all=await page.evaluate(()=>Array.from(document.querySelectorAll('#composition-designs canvas'),c=>c.toDataURL()));
   assert.equal(new Set(all).size,8);
   await page.select('#composition-body','B-octopus');
   const first=await page.$eval('#collectible-front',c=>c.toDataURL());
@@ -58,9 +58,10 @@ try{
   await page.waitForFunction(previous=>document.querySelector('#collectible-front').toDataURL()!==previous,{},first);
   await page.$eval('#composition-rotation',e=>{e.value='12';e.dispatchEvent(new Event('input'));});
   await page.select('#composition-color','#e1d8ee');
+  await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
   const noTentacle=await page.$eval('#collectible-front',c=>c.toDataURL());
   await page.click('#composition-tentacle');
-  assert.notEqual(await page.$eval('#collectible-front',c=>c.toDataURL()),noTentacle);
+  await page.waitForFunction(previous=>document.querySelector('#collectible-front').toDataURL()!==previous,{},noTentacle);
   await page.click('#composition-save');
   const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('stickerwall-composition-prefs-v1')));
   assert.equal(saved['B-octopus'].scale,160);assert.equal(saved['B-octopus'].rotation,12);
