@@ -14,14 +14,18 @@ from PIL import Image, ImageOps
 
 try:
     from .head_mask import isolate, apply_silhouette, normalized_tensor
+    from .cartoon import cartoon_image, CARTOONS
 except ImportError:
     from head_mask import isolate, apply_silhouette, normalized_tensor
+    from cartoon import cartoon_image, CARTOONS
 
 ASSETS = Path(__file__).resolve().parent / "assets"
 STYLES = ("opensketch", "contour", "anime", "contourplus", "u2net")
 MODEL_PATHS = {style: ASSETS / f"{style}_style_512x512.onnx" for style in STYLES[:3]}
 MODEL_PATHS["bisenet"] = ASSETS / "bisenet_resnet18.onnx"
 MODEL_PATHS["u2net"] = ASSETS / "u2net_portrait.onnx"
+MODEL_PATHS["photo2cartoon"] = ASSETS / "photo2cartoon.onnx"
+MODEL_PATHS["animegan"] = ASSETS / "animegan_face_paint.onnx"
 _SESSION = None
 _SESSION_STYLE = None
 
@@ -108,7 +112,7 @@ def result(worker):
         return {"ok": False, "error": str(exc)}
 
 
-def compare(source, include_references=True):
+def compare(source, include_references=True, include_cartoons=False):
     outputs = {style: result(lambda s=style: informative_drawings(source, s)) for style in STYLES[:3]} if include_references else {}
     begin = time.perf_counter()
     try:
@@ -123,4 +127,16 @@ def compare(source, include_references=True):
     if include_references:
         outputs["contourplus"] = result(lambda: _encode_png(apply_silhouette(informative_image(isolated, "contour"), mask)))
     outputs["u2net"] = result(lambda: _encode_png(apply_silhouette(u2net_image(isolated), mask)))
+    if include_cartoons:
+        for model in CARTOONS:
+            begin = time.perf_counter()
+            try:
+                color = cartoon_image(isolated, mask, get_session(model), model)
+                outputs[model] = {"ok": True, "png": base64.b64encode(_encode_png(color)).decode("ascii"),
+                                  "elapsed_ms": round((time.perf_counter()-begin)*1000)}
+            except Exception as exc:
+                outputs[model] = {"ok": False, "error": str(exc)}
+                continue
+            outputs[model+"_direct"] = result(lambda: _encode_png(apply_silhouette(color, mask)))
+            outputs[model+"_u2"] = result(lambda: _encode_png(apply_silhouette(u2net_image(color), mask)))
     return outputs

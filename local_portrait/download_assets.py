@@ -42,6 +42,17 @@ ASSET_LIST = (
         "https://github.com/cocoa-xu/U-2-Net/releases/download/onnx-20230530/u2net_portrait.onnx",
         "sha256:c82cb4ac797e4a2de23643b6cc7fc83aa0d4f03a9673b7cea09d2f4f623e82ca",
         176033758,
+    ),    (
+        "photo2cartoon.onnx",
+        "https://raw.githubusercontent.com/LiteraturePro/Photo2cartoon/0a53ec1c5922e46127c00faca6cf8724324ea724/models/photo2cartoon_weights.onnx",
+        "24d82f3cef332583cd9ba702b0c603fbbbc857db",
+        15290506,
+    ),
+    (
+        "animegan_face_paint.onnx",
+        "https://raw.githubusercontent.com/Kazuhito00/AnimeGANv2-ONNX-Sample/1597c3ad45b2db87e1ac4944ee62cfdb30d0670d/model/face_paint_512_v2_0.onnx",
+        "868971586bce2f460c51dcb5142f9f204998331c",
+        8594990,
     ),
 )
 

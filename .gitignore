@@ -19,3 +19,6 @@ local_portrait/assets/
 .stickerwall-update-state.json
 .stickerwall-update-state.json.tmp
 .stickerwall-update.lock
+
+# Private local development portraits; never commit or deploy.
+.stickerwall-testset/

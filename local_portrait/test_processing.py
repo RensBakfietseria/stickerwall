@@ -23,7 +23,7 @@ class ProcessingTests(unittest.TestCase):
             self.assertEqual(im.size, self.image.size)
 
     def test_assets(self):
-        self.assertEqual(len({entry[2] for entry in ASSET_LIST}), 5)
+        self.assertEqual(len({entry[2] for entry in ASSET_LIST}), 7)
         self.assertEqual({entry[0] for entry in ASSET_LIST},
                          {p.name for p in processing.MODEL_PATHS.values()})
 

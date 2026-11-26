@@ -200,13 +200,13 @@ export function mountLocalComparison(config: Config): {
         return response.json() as Promise<{ protocol: number; local: boolean; engines: Record<Model, { ready: boolean }> }>;
       })
       .then((info) => {
-        if (info.protocol !== 7 || !info.local) throw new Error('Start eerst de 0.7-server.');
+        if (info.protocol !== 8 || !info.local) throw new Error('Start eerst de 0.8-server.');
         serverReady = true;
         compareButton.disabled = false;
-        show(info.engines?.u2net?.ready ? 'Lokale 0.7-server · U²-Net en hoofdsegmentatie klaar.' : 'Lokale 0.7-server · U²-model of hoofdsegmentatie ontbreekt. Voer setup uit.');
+        show(info.engines?.u2net?.ready ? 'Lokale 0.8-server · U²-Net en hoofdsegmentatie klaar.' : 'Lokale 0.8-server · U²-model of hoofdsegmentatie ontbreekt. Voer setup uit.');
       })
       .catch(() => {
-        show('Geen lokale 0.7-server gevonden. Sluit de oude versie en start de nieuwe versie.');
+        show('Geen lokale 0.8-server gevonden. Sluit de oude versie en start de nieuwe versie.');
       });
   }
 

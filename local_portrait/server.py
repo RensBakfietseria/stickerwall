@@ -12,15 +12,17 @@ import mimetypes
 import os
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import unquote, urlsplit
+from urllib.parse import unquote, urlsplit, parse_qs
 from threading import BoundedSemaphore
 
 from PIL import Image, UnidentifiedImageError
 
 try:
     from .processing import compare, readiness
+    from . import testset
 except ImportError:
     from processing import compare, readiness
+    import testset
 
 ROOT = Path(__file__).resolve().parents[1]
 DIST = (ROOT / "dist-stickerwall").resolve()
@@ -77,7 +79,17 @@ class Handler(BaseHTTPRequestHandler):
             return
         route = urlsplit(self.path).path
         if route == "/api/local/status":
-            self._json(200, {"local": True, "protocol": 7, "engines": readiness()})
+            self._json(200, {"local": True, "protocol": 8, "engines": readiness()})
+            return
+        if route.startswith("/api/local/testset/"):
+            try:
+                data = testset.read(route.rsplit("/",1)[1])
+                if data is None:
+                    self._json(404, {"error":"Testportret nog niet ingesteld."})
+                else:
+                    self._send(200, data, "image/png")
+            except (ValueError,OSError) as exc:
+                self._json(400, {"error":str(exc)})
             return
         if route == "/":
             route = "/stickerwall.html"
@@ -93,7 +105,8 @@ class Handler(BaseHTTPRequestHandler):
         self._send(200, data, mime)
 
     def do_POST(self):
-        if not self._trusted() or urlsplit(self.path).path != "/api/local/compare":
+        route = urlsplit(self.path).path
+        if not self._trusted() or not (route == "/api/local/compare" or route.startswith("/api/local/testset/")):
             self._json(403, {"error": "Alleen dezelfde lokale pagina mag portretten verwerken."})
             return
         if self.headers.get("Content-Type", "").split(";")[0] != "image/png":
@@ -125,10 +138,29 @@ class Handler(BaseHTTPRequestHandler):
             except (UnidentifiedImageError, ValueError, OSError):
                 self._json(400, {"error": "Kan de afbeelding niet openen."})
                 return
-            # Source pixels and model outputs exist only in memory.
-            self._json(200, {"results": compare(source, include_references=urlsplit(self.path).query == "references=1")})
+            if route.startswith("/api/local/testset/"):
+                try:
+                    testset.save(route.rsplit("/",1)[1], source)
+                    self._json(200, {"saved":True})
+                except (ValueError,OSError) as exc:
+                    self._json(400, {"error":str(exc)})
+                return
+            # Ordinary inference remains in memory. Only explicit testset POSTs save.
+            query = parse_qs(urlsplit(self.path).query)
+            self._json(200, {"results": compare(source, include_references=query.get("references")==["1"], include_cartoons=query.get("cartoons")==["1"])})
         finally:
             INFERENCE_LOCK.release()
+
+    def do_DELETE(self):
+        route = urlsplit(self.path).path
+        if not self._trusted() or not route.startswith("/api/local/testset/"):
+            self._json(403, {"error":"Alleen lokaal toegestaan."})
+            return
+        try:
+            testset.remove(route.rsplit("/",1)[1])
+            self._json(200, {"removed":True})
+        except (ValueError,OSError) as exc:
+            self._json(400, {"error":str(exc)})
 
 
 def main():
@@ -136,7 +168,7 @@ def main():
         raise SystemExit("Build ontbreekt: voer eerst npm run stickerwall:build uit.")
     server = ThreadingHTTPServer((HOST, PORT), Handler)
     print(f"Sticky Wall lokaal: http://{HOST}:{PORT}/stickerwall.html")
-    print("Cartoonlab 0.7: adaptieve U2-afwerking met lokale regio's. Geen cloud-API.")
+    print("Cartoonlab 0.8: Cartoon First, vaste lokale testset. Geen cloud-API.")
     try:
         server.serve_forever()
     except KeyboardInterrupt:
