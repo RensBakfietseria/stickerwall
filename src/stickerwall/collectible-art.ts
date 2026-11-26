@@ -1,4 +1,5 @@
 import { drawCardAnimal } from './artwork.ts';
+import {placeParts,type Part,type Asset,type AccessoryId,type Placed} from './fantasy.ts';
 import {compositionGeometry,illustratedName,DEFAULT_COMPOSITION,type BodyAsset,type Composition} from './composition.ts';
 import { creatureName, type Creature, type Quality } from './model.ts';
 
@@ -8,7 +9,7 @@ export const LAYOUTS = ['atelier','club','archive'] as const;
 export type Layout = typeof LAYOUTS[number];
 export const LAYOUT_NAMES: Record<Layout,string> = {atelier:'Atelier · klassieke prent',club:'Club · grafisch & speels',archive:'Archief · karakterstudie'};
 export type Portrait = {image: CanvasImageSource; width:number; height:number; anchor:{x:number;y:number;faceHeight:number}};
-export type Design = {format:Format;layout:Layout;accent:boolean;creature:Creature;qualities:readonly Quality[];portrait:Portrait;body?:BodyAsset;composition?:Composition};
+export type Design = {format:Format;layout:Layout;accent:boolean;creature:Creature;qualities:readonly Quality[];portrait:Portrait;body?:BodyAsset;composition?:Composition;parts?:Part[];accessories?:Map<AccessoryId,Asset>};
 export type Back = {brand:string;message:string;logo:CanvasImageSource|null;logoWidth:number;logoHeight:number};
 const INK='#24231f';
 const palettes={
@@ -68,18 +69,25 @@ function cutout(p:Portrait):HTMLCanvasElement{
 function character(c:CanvasRenderingContext2D,d:Design,x:number,y:number,w:number,h:number){
   if(d.body){
     const body=d.body,settings=d.composition??DEFAULT_COMPOSITION,p=d.portrait,cut=cutout(p);
-    const geo=compositionGeometry(body,p,settings),fitScale=Math.min((w-22)/(geo.right-geo.left),(h-22)/(geo.bottom-geo.top));
+    const geo=compositionGeometry(body,p,settings);
+    const parts=placeParts(d.parts??[],d.accessories??new Map(),geo,p.anchor);
+    const left=Math.min(geo.left,...parts.map(v=>v.left)),right=Math.max(geo.right,...parts.map(v=>v.right)),top=Math.min(geo.top,...parts.map(v=>v.top)),bottom=Math.max(geo.bottom,...parts.map(v=>v.bottom));
+    const fitScale=Math.min((w-22)/(right-left),(h-22)/(bottom-top));
+    const drawPart=(v:Placed)=>{c.save();c.translate(v.x,v.y);c.rotate(v.angle);c.drawImage(v.asset.image,-v.w/2,-v.h/2,v.w,v.h);c.restore();};
     c.save();
-    c.translate(x+w/2-(geo.left+geo.right)*fitScale/2,y+h/2-(geo.top+geo.bottom)*fitScale/2);
+    c.translate(x+w/2-(left+right)*fitScale/2,y+h/2-(top+bottom)*fitScale/2);
     c.scale(fitScale,fitScale);
+    parts.filter(v=>v.part.layer==='back').forEach(drawPart);
     // White paper is kept opaque; optional body tint affects the white areas only.
     if(d.accent){
       const tint=canvas(body.width,body.height),g=tint.getContext('2d')!;
       g.drawImage(body.image,0,0);g.globalCompositeOperation='multiply';g.fillStyle=palettes[d.layout].body;g.fillRect(0,0,tint.width,tint.height);g.globalCompositeOperation='destination-in';g.drawImage(body.image,0,0);
       c.drawImage(tint,0,0,geo.bw,geo.bh);
     }else c.drawImage(body.image,0,0,geo.bw,geo.bh);
+    parts.filter(v=>v.part.layer==='behind-head').forEach(drawPart);
     c.save();c.translate(geo.ax,geo.ay);c.rotate(geo.angle);c.drawImage(cut,geo.dx,geo.dy,cut.width*geo.hs,cut.height*geo.hs);c.restore();
     if(settings.tentacle&&body.front)c.drawImage(body.front,0,0,geo.bw,geo.bh);
+    parts.filter(v=>v.part.layer==='front').forEach(drawPart);
     c.restore();return;
   }
   const scale=Math.min(w/465,h/545);
