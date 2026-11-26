@@ -1,8 +1,11 @@
-# Stickerwall 0.8 — Cartoon First
+# Stickerwall 0.9 — Collectibles
 
-Bouwopdracht: houd de drie lokale testportretten vast en vergelijk de huidige
-U² Adaptief met twee echte cartoon-tussenstappen (Photo2Cartoon en AnimeGANv2
-Face Paint), telkens gevolgd door U² of directe zwart-witafwerking.
-Dezelfde Proefatelier-pagina, geen cloud, geen nieuwe dierillustraties.
-Vaste testuitsneden alleen na expliciete keuze, buiten updater en webroot.
-Geen modelresultaten archiveren. Zie [installatie en tests](local_portrait/README.md).
+AnimeGANv2 kleurhoofd als collage op de bestaande dieren. Nieuwe kadrering
+en gezicht-gebonden maskering voor de kaart, drie ontwerpen en twee
+lichaamscomposities, vaste testset, lokale logo/tekst achterzijde.
+PNG 300 ppi, exact kaartformaat PDF, A4 dubbelzijdig met snijtekens.
+Bestaande zwart-witroute en updater behouden. Stickerboom geparkeerd.
+Geen nieuwe modelgewichten, cloud, automatisch archief of printeraansturing.
+Fysieke proefdrukken en modellicenties nog te beoordelen.
+
+[Lokale instructies](local_portrait/README.md).

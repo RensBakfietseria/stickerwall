@@ -3,7 +3,7 @@ name: Sticky Wall local portrait engines
 on:
   push:
     branches:
-      - stickerwall-0-8-cartoon-first
+      - stickerwall-0-9-collectibles
   pull_request:
     paths:
       - 'local_portrait/**'
@@ -32,7 +32,7 @@ jobs:
       - run: npm ci
       - run: npm run stickerwall:build
       - run: npm run typecheck
-      - run: npx vitest run test/stickerwall.test.ts test/stickerwall-ink.test.ts test/stickerwall-u2-finish.test.ts test/stickerwall-u2-adaptive.test.ts
+      - run: npx vitest run test/stickerwall.test.ts test/stickerwall-ink.test.ts test/stickerwall-u2-finish.test.ts test/stickerwall-u2-adaptive.test.ts test/stickerwall-collectible.test.ts
 
   engine-smoke:
     runs-on: windows-latest
@@ -62,6 +62,14 @@ jobs:
       - name: Real Cartoon First browser and persistent batch test
         shell: pwsh
         run: node local_portrait/cartoon_smoke.mjs "$env:RUNNER_TEMP\stickerwall-public-face.jpg"
+      - name: Real Collectibles browser and print export test
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force "$env:RUNNER_TEMP\collectible-exports"
+          node local_portrait/collectible_smoke.mjs "$env:RUNNER_TEMP\stickerwall-public-face.jpg" "$env:RUNNER_TEMP\collectible-exports"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & .\.local-portrait-venv\Scripts\python.exe -m pip install pypdf
+          & .\.local-portrait-venv\Scripts\python.exe local_portrait\check_collectible_exports.py "$env:RUNNER_TEMP\collectible-exports"
       - name: Verify setup is reusable
         shell: pwsh
         run: powershell -ExecutionPolicy Bypass -File .\local_portrait\setup.ps1

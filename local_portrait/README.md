@@ -1,6 +1,14 @@
-# Stickerwall 0.8 — Cartoon First
+# Stickerwall 0.9 — Collectibles
 
 Vijf tekenvarianten: Contour, Contour+ (BiSeNet + Contour), U²-Net Portrait (met BiSeNet), OpenSketch en Anime. Alle verwerking lokaal op CPU. Geen G'MIC of PyTorch. APDrawingGAN++ blijft onderzocht, niet actief.
+
+## Build 0.9
+
+Sectie 04: maak kaarten van de vaste testset of huidige foto. Alleen AnimeGANv2 en BiSeNet worden gebruikt voor de kleurroute. De nieuwe segmentatie gebruikt een gezicht-gebonden envelop, kleine morfologische filters en geen grote opgevulde gaten tussen haar en hals. De strakke uitsnede en kinpositie houden de collage op schaal; de oudere zwart-witroute blijft ongewijzigd. Foutieve segmentatie blijft mogelijk, vooral bij lastig haar of te kleine gezichten.
+
+Atelier, Club en Archief met zwart-wit dierenlijf of kleuraccent; zes previews en drie profielen. De bestaande dieren zijn technische illustratieprototypes. Achterzijde met lokaal PNG/JPG/WebP-logo, naam en korte tekst. Logo en kaartresultaten blijven in geheugen. Export door expliciete download, geen automatische opslag.
+
+Tradingcard 63 x 88 mm (744 x 1039 px) en 100 x 150 mm (1181 x 1772 px), PNG pHYs 300 ppi. PDF: twee exact gedimensioneerde pagina's, lossless RGB raster. A4: zes tradingcards (testportretten herhaald) of één grote kaart, twee zijden met snijtekens en gespiegeld geplaatste achterkant voor lange-zijde duplex. Print op ware grootte. Geen afloop; dit is een interne proefdruk, geen drukkerij-PDF/X of CMYK. Controleer fysieke dubbelzijdige uitlijning, kleur, papier en snijden. Geen nieuwe modelgewichten, geen printerroutering. Licenties van modelgewichten nog niet commercieel gevalideerd.
 
 ## Build 0.8
 
@@ -95,7 +103,7 @@ op 127.0.0.1:8765. De server verwerkt pixels in geheugen; er zijn geen
 uitgaande API-aanroepen, tijdelijke portretbestanden of fotogalerij.
 De server bewaart geen requestlog. De browser heeft een restrictief CSP en
 weigert redirects voor modelrequests. De portretvergelijking werkt alleen
-met protocolversie 8 op de lokale server, niet op een externe Vercel-host.
+met protocolversie 9 op de lokale server, niet op een externe Vercel-host.
 Dit is ontwerp en technische test, geen volledige privacy- of securityaudit.
 Gebruik een eigen onbewerkte foto om de artistieke kwaliteit te beoordelen.
 

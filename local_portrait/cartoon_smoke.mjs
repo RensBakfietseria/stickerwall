@@ -15,7 +15,7 @@ const slots=['kaal-bril','lang-haar','krullen'];
 let browser;
 try{
   for(let i=0;i<80;i++){
-    try{if((await fetch(base+'/api/local/status').then(r=>r.json())).protocol===8)break;}catch{}
+    try{if((await fetch(base+'/api/local/status').then(r=>r.json())).protocol===9)break;}catch{}
     if(i===79)throw Error('server not ready');
     await new Promise(r=>setTimeout(r,250));
   }
