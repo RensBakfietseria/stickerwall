@@ -9,7 +9,8 @@ import tempfile
 from PIL import Image
 
 SLOTS = ("kaal-bril","lang-haar","krullen")
-ROOT = Path(__file__).resolve().parents[1] / ".stickerwall-testset"
+# Store outside the installation and repository, not in a synced project tree.
+ROOT = Path(os.environ.get("LOCALAPPDATA") or (Path.home() / ".local" / "share")) / "Stickerwall" / "testset"
 
 
 def slot_path(slot, root=None):

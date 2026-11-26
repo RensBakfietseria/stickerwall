@@ -6,6 +6,9 @@ import testset
 
 
 class TestSetTests(unittest.TestCase):
+    def test_default_storage_outside_repository(self):
+        self.assertFalse(testset.ROOT.resolve().is_relative_to(Path(testset.__file__).resolve().parents[1]))
+
     def test_explicit_crops_persist_replace_and_remove(self):
         with tempfile.TemporaryDirectory() as work:
             root=Path(work)/".stickerwall-testset"
