@@ -14,7 +14,7 @@ describe('adaptive U2 finishing',()=>{
       else if(y===1||y===h-2||x===1||x===w-2)regions[p+2]=255;
       else if(x<12)regions[p]=255;
       else if(x>17)regions[p+1]=255;
-      const tone=(x===5||x===21)?85:(x===6?192:(x===22?220:255));
+      const tone=(x===5||x===21)?85:(x===6?207:(x===22?219:255));
       if(y>4&&y<19)rgba[p]=rgba[p+1]=rgba[p+2]=tone;
     }
     return {rgba,regions};
