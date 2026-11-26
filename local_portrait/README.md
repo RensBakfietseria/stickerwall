@@ -1,6 +1,12 @@
-# Stickerwall 0.10 — Compositielab
+# Stickerwall 0.11 — Fantasiebeestenlab
 
 Vijf tekenvarianten: Contour, Contour+ (BiSeNet + Contour), U²-Net Portrait (met BiSeNet), OpenSketch en Anime. Alle verwerking lokaal op CPU. Geen G'MIC of PyTorch. APDrawingGAN++ blijft onderzocht, niet actief.
+
+## Build 0.11
+
+Het Collectibles-atelier staat centraal: één grote kaart naast de bediening. De oude modelvergelijkingen, testsetbeheer, zwart-witprinter, achterkant, export en drie vergelijkingspanelen zijn inklapbaar. Vergelijkingen worden alleen gerenderd als het paneel open staat. De testportretten heten nu Testportret 1–3; de bestanden blijven op hun bestaande lokale plek.
+
+Negen originele losse transparante illustraties zijn meegeleverd via de updater. Klik Probeer A+ voor een proefcombinatie op het lichte A-lijf of voeg onderdelen zelf toe. Kies een onderdeel en stel schaal, x/y, rotatie en laag in. Achter lichaam en haar, tussen lichaam en hoofd, of voor hoofd en haar. Maximaal zes onderdelen tegelijk. Bewaar per dier/stijl bewaart alleen de compositie- en accessoirewaarden in lokale browseropslag. Geen portretfoto’s. De bestaande A/B-lichamen, kleurroute en exports blijven behouden. A+ is een eerste compositiestudie, geen volledig nieuw getekende lichaamsserie. Lang haar wordt nog niet afzonderlijk gesegmenteerd. Artistieke plaatsing en fysieke printkwaliteit zijn te beoordelen.
 
 ## Build 0.10
 

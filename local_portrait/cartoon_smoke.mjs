@@ -33,6 +33,7 @@ try{
     }else{external.push(url);void r.abort();}
   });
   await page.goto(base+'/stickerwall.html',{waitUntil:'domcontentloaded',timeout:60000});
+  await page.evaluate(()=>document.querySelectorAll('details').forEach(d=>d.open=true));
   await page.waitForFunction(()=>!document.querySelector('#cartoon-current').disabled);
   assert(await page.$eval('#cartoon-batch',b=>b.disabled));
   for(let i=0;i<slots.length;i++){
@@ -44,6 +45,7 @@ try{
   assert.equal(saves,3);
   assert(!(await page.$eval('#cartoon-batch',b=>b.disabled)));
   await page.reload({waitUntil:'domcontentloaded',timeout:60000});
+  await page.evaluate(()=>document.querySelectorAll('details').forEach(d=>d.open=true));
   await page.waitForFunction(()=>!document.querySelector('#cartoon-batch').disabled);
   assert.equal(saves,3,'reload must not write portraits');
   await page.click('#cartoon-batch');

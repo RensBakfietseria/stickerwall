@@ -1,11 +1,9 @@
-# Stickerwall 0.10 — Compositielab
+# Stickerwall 0.11 — Fantasiebeestenlab
 
-Vergelijk vier dieren in stijlen A en B op dezelfde lokaal gegenereerde
-AnimeGAN-hoofden. De acht oorspronkelijke illustraties komen automatisch mee via de updater.
-Hoofdschaling, kinpositie, rotatie, kleurcirkel en optionele voorgrondtentakel.
-Voorkeursinstellingen per dier/stijl bewaren, uitsluitend getallen en kleuren.
-Bestaande kaartlayouts, naamgenerator voor de oude dieren, printformaten en
-testset behouden. Nieuwe dieren krijgen passende titels. Geen nieuwe modellen,
-cloud of portretarchief. De artistieke proef staat centraal.
+Zie [bouwopdracht](BUILD_0_11.md). Eén kaart als hoofdwerkplaats, oude
+experimenten en vergelijkingen op verzoek. Negen nieuwe originele losse
+illustraties, drie lagen, onafhankelijke plaatsing per onderdeel en A+-proef.
+Behoud van acht A/B-lichamen, testset, lokale AI, naamgeving, printer en exports.
+Geen nieuwe modelgewichten of cloud.
 
 [Lokale instructies](local_portrait/README.md).
