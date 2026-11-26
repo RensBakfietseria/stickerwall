@@ -6,7 +6,7 @@ import { finishAdaptive } from './u2-adaptive.ts';
 import { finishU2 } from './u2-finish.ts';
 import { thresholdInk } from './ink.ts';
 
-const SLOTS = [['kaal-bril','Kaal + bril'],['lang-haar','Lang haar + bril'],['krullen','Krullend haar']] as const;
+const SLOTS = [['kaal-bril','Testportret 1'],['lang-haar','Testportret 2'],['krullen','Testportret 3']] as const;
 type Slot = typeof SLOTS[number][0];
 type ModelResult = {ok: boolean; png?: string; error?: string; elapsed_ms?: number};
 type Results = Record<string,ModelResult | undefined>;

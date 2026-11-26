@@ -116,3 +116,32 @@ footer{max-width:1280px;padding:22px 34px;margin:0 auto;border-top:1px solid #d6
 .composition-lab{margin:18px 0}
 .composition-lab input[type=file]{max-width:100%;font-size:12px}
 .composition-lab input[type=range]{width:100%;padding:0}
+
+/* 0.11: card studio first. Old experiments are closed until requested. */
+.studio-workspace{display:grid;gap:14px;margin-top:22px}
+.studio-editor{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:start}
+.studio-preview{position:sticky;top:15px;background:#eae5db;border-radius:12px;padding:18px}
+.studio-preview-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.studio-preview-head h3{margin:0;font:500 22px Georgia,serif}
+.studio-preview-head span{font-size:11px;color:#68645e}
+.studio-preview canvas{display:block;width:100%;height:auto;max-width:390px;margin:0 auto;background:white;box-shadow:0 6px 15px #0002}
+.studio-empty{padding:18px;text-align:center;font-size:13px;color:#5d5a54;border:1px dashed #b5ad9e;margin-bottom:10px}
+.studio-empty[hidden]{display:none}
+.studio-fold{border:1px solid #d6cec1;border-radius:8px;margin:12px 0;padding:12px;background:#fff}
+.studio-fold summary{cursor:pointer;font-size:14px;font-weight:700;line-height:1.5}
+.studio-fold[open]>summary{margin-bottom:12px}
+.studio-section{padding:15px 20px;margin:0}
+.studio-section>.panel{padding:16px;border:0}
+.studio-legacy{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.studio-legacy .result{position:static;grid-column:2;grid-row:1 / span 2}
+.studio-inline{display:flex;align-items:end;gap:8px;flex-wrap:wrap;margin:8px 0}
+.studio-inline label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;flex:1;min-width:140px}
+.studio-inline select,.fantasy-panel select{border:1px solid #c9c1b4;background:#fff;border-radius:6px;padding:8px;min-width:0;font:inherit}
+.fantasy-panel{padding:14px;background:#f8f5ef;border:1px solid #d7cec2;border-radius:10px;margin-top:12px}
+.fantasy-panel h3{font:500 20px Georgia,serif;margin:0}
+.fantasy-panel .button,.studio-controls .button{font-size:12px;padding:9px 11px}
+.fantasy-panel input[type=range]{width:100%;padding:0;accent-color:#1b1b1b}
+.fantasy-panel output{color:#8a684e}
+#compare-bodies .composition-designs{grid-template-columns:repeat(4,minmax(0,1fr))}
+#compare-layouts .collectible-designs{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:850px){.studio-editor,.studio-legacy{grid-template-columns:1fr}.studio-preview{position:static;grid-row:1}.studio-legacy .result{grid-column:auto;grid-row:auto}#compare-bodies .composition-designs{grid-template-columns:repeat(2,minmax(0,1fr))}}

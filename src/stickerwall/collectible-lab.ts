@@ -4,7 +4,9 @@ import {makePortraitInput,type Crop} from './portrait.ts';
 import type {Creature,Quality} from './model.ts';
 import {BODY_IDS,BODY_LABEL,PALETTES,ART_KEY,PREF_KEY,DEFAULT_COMPOSITION,normalizeComposition,loadPreferences,loadPack,type BodyId,type BodyAsset,type Composition} from './composition.ts';
 
-const SLOTS=[['kaal-bril','Kaal + bril'],['lang-haar','Lang haar + bril'],['krullen','Krullend haar']] as const;
+import {ACCESSORIES,PART_LABEL,PART_KEY,newPart,normalizeParts,aPlus,loadAccessories,type AccessoryId,type Asset,type Part,type Layer} from './fantasy.ts';
+
+const SLOTS=[['kaal-bril','Testportret 1'],['lang-haar','Testportret 2'],['krullen','Testportret 3']] as const;
 type Entry={key:string;label:string;portrait:Portrait};
 type Config={getImage:()=>ImageBitmap|null;getCrop:()=>Crop;getCreature:()=>Creature;getQualities:()=>readonly Quality[]};
 type Result={ok:boolean;png?:string;error?:string;anchor?:Portrait['anchor']};
@@ -28,6 +30,11 @@ export function mountCollectibles(config:Config):{refresh:()=>void;clear:()=>voi
   const bodyGrid=el<HTMLDivElement>('composition-designs'),scale=el<HTMLInputElement>('composition-scale'),x=el<HTMLInputElement>('composition-x'),y=el<HTMLInputElement>('composition-y'),rotation=el<HTMLInputElement>('composition-rotation');
   const background=el<HTMLSelectElement>('composition-color'),tentacle=el<HTMLInputElement>('composition-tentacle');
   const savePrefs=el<HTMLButtonElement>('composition-save'),resetPrefs=el<HTMLButtonElement>('composition-reset'),removeArt=el<HTMLButtonElement>('composition-remove');
+  const compareBodies=el<HTMLDetailsElement>('compare-bodies'),compareLayouts=el<HTMLDetailsElement>('compare-layouts'),compareProfiles=el<HTMLDetailsElement>('compare-profiles');
+  const partChoice=el<HTMLSelectElement>('fantasy-choice'),partActive=el<HTMLSelectElement>('fantasy-active'),partAdd=el<HTMLButtonElement>('fantasy-add'),partRemove=el<HTMLButtonElement>('fantasy-remove'),partPreset=el<HTMLButtonElement>('fantasy-preset'),partClear=el<HTMLButtonElement>('fantasy-clear'),partStatus=el<HTMLParagraphElement>('fantasy-status');
+  const partScale=el<HTMLInputElement>('fantasy-scale'),partX=el<HTMLInputElement>('fantasy-x'),partY=el<HTMLInputElement>('fantasy-y'),partRotation=el<HTMLInputElement>('fantasy-rotation'),partLayer=el<HTMLSelectElement>('fantasy-layer');
+  const partInputs=[partScale,partX,partY,partRotation];
+  let accessories=new Map<AccessoryId,Asset>(),partDrafts:Partial<Record<BodyId,Part[]>>={},savedParts:Partial<Record<BodyId,Part[]>>={};
   let art=new Map<BodyId,BodyAsset>(),preferences:Partial<Record<BodyId,Composition>>={},drafts:Partial<Record<BodyId,Composition>>={},importSerial=0,compositionFrame=0;
   let entries:Entry[]=[],logo:ImageBitmap|null=null,ready=false,busy=false,exporting=false,serial=0,logoSerial=0,controller:AbortController|null=null;
   function show(s:string){status.textContent=s;}
@@ -38,12 +45,39 @@ export function mountCollectibles(config:Config):{refresh:()=>void;clear:()=>voi
   }
   function selectedBody(){return art.get(bodyChoice.value as BodyId);}
   function settings(id:BodyId):Composition{return normalizeComposition(drafts[id]??preferences[id]??DEFAULT_COMPOSITION);}
-  function design(entry:Entry,l=layout.value as Layout,a=accent.checked,b=selectedBody()):Design{return {format:format.value as Format,layout:l,accent:a,creature:config.getCreature(),qualities:config.getQualities(),portrait:entry.portrait,body:b,composition:b?settings(b.id):undefined};}
+  function parts(id:BodyId):Part[]{return normalizeParts(partDrafts[id]??savedParts[id]??[]);}
+  function activePart(){const b=selectedBody();return b?parts(b.id).find(p=>p.id===partActive.value):undefined;}
+  function updatePartControls(){
+    const b=selectedBody(),list=b?parts(b.id):[],previous=partActive.value;
+    partActive.replaceChildren(...list.map(p=>new Option(PART_LABEL[p.id],p.id)));
+    if(list.some(p=>p.id===previous))partActive.value=previous;
+    const p=activePart();
+    partChoice.disabled=!b||!accessories.size;
+    partAdd.disabled=!b||!accessories.size||list.length>=6||list.some(p=>p.id===partChoice.value);
+    partPreset.disabled=!b||!accessories.size;
+    partClear.disabled=!list.length;partRemove.disabled=!p;partActive.disabled=!list.length;
+    partScale.value=String(p?.scale??100);partX.value=String(p?.x??0);partY.value=String(p?.y??0);partRotation.value=String(p?.rotation??0);partLayer.value=p?.layer??'front';
+    for(const input of partInputs){input.disabled=!p;el<HTMLOutputElement>(input.id+'-value').value=input.value;}
+    partLayer.disabled=!p;
+  }
+  function changeParts(list:Part[],active?:AccessoryId){
+    const b=selectedBody();if(!b)return;
+    partDrafts[b.id]=normalizeParts(list);updatePartControls();
+    if(active){partActive.value=active;updatePartControls();}
+    refresh();
+  }
+  function readPart(){
+    const b=selectedBody(),p=activePart();if(!b||!p)return;
+    partDrafts[b.id]=normalizeParts(parts(b.id).map(a=>a.id===p.id?{...a,scale:Number(partScale.value),x:Number(partX.value),y:Number(partY.value),rotation:Number(partRotation.value),layer:partLayer.value as Layer}:a));
+    for(const input of partInputs)el<HTMLOutputElement>(input.id+'-value').value=input.value;
+    cancelAnimationFrame(compositionFrame);compositionFrame=requestAnimationFrame(refresh);
+  }
+  function design(entry:Entry,l=layout.value as Layout,a=accent.checked,b=selectedBody()):Design{return {format:format.value as Format,layout:l,accent:a,creature:config.getCreature(),qualities:config.getQualities(),portrait:entry.portrait,body:b,composition:b?settings(b.id):undefined,parts:b?parts(b.id):[],accessories};}
   function updateControls(){
     const b=selectedBody(),v=b?settings(b.id):DEFAULT_COMPOSITION;
     scale.value=String(v.scale);x.value=String(v.x);y.value=String(v.y);rotation.value=String(v.rotation);background.value=v.background;tentacle.checked=v.tentacle;
     for(const input of [scale,x,y,rotation,background,savePrefs,resetPrefs])input.disabled=!b;
-    tentacle.disabled=!b?.front;removeArt.disabled=!art.size;
+    tentacle.disabled=!b?.front;removeArt.disabled=!art.size;updatePartControls();
     for(const input of [scale,x,y,rotation])el<HTMLOutputElement>(input.id+'-value').value=input.value;
   }
   function readControls(){
@@ -82,17 +116,18 @@ export function mountCollectibles(config:Config):{refresh:()=>void;clear:()=>voi
     const entry=selected(),f=format.value as Format,l=layout.value as Layout;
     paint(back,renderBack(f,l,backData(),true));
     comparisons.replaceChildren();profiles.replaceChildren();bodyGrid.replaceChildren();
+    el<HTMLElement>('collectible-empty').hidden=!!entry;
     if(!entry){front.width=315;front.height=440;front.getContext('2d')!.clearRect(0,0,315,440);sync();return;}
-    paint(front,renderFront(design(entry),true));
-    for(const style of LAYOUTS)for(const colored of [false,true]){
+    paint(front,renderFront(design(entry)));
+    if(compareLayouts.open)for(const style of LAYOUTS)for(const colored of [false,true]){
       thumbnail(comparisons,renderFront(design(entry,style,colored),true),LAYOUT_NAMES[style]+' · '+(colored?'kleuraccent':'zwart-wit lijf'),()=>{
         layout.value=style;accent.checked=colored;refresh();
       });
     }
-    for(const id of BODY_IDS){
+    if(compareBodies.open)for(const id of BODY_IDS){
       const b=art.get(id);if(b)thumbnail(bodyGrid,renderFront(design(entry,l,accent.checked,b),true),BODY_LABEL[id],()=>selectBody(id));
     }
-    for(const e of entries)thumbnail(profiles,renderFront(design(e),true),e.label,()=>{person.value=e.key;refresh();});
+    if(compareProfiles.open)for(const e of entries)thumbnail(profiles,renderFront(design(e),true),e.label,()=>{person.value=e.key;refresh();});
     sync();
   }
   function updatePeople(){
@@ -105,7 +140,7 @@ export function mountCollectibles(config:Config):{refresh:()=>void;clear:()=>voi
     ++serial;controller?.abort();entries=[];updatePeople();show('Kaartresultaten uit het geheugen verwijderd. Vaste testfoto’s blijven staan.');
   }
   async function run(items:readonly {key:string;label:string;source:Blob}[]){
-    if(!items.length){show('Geen testfoto’s beschikbaar. Stel de drie plekken in bij 03C.');return;}
+    if(!items.length){show('Geen testfoto’s beschikbaar. Stel de drie plekken in bij Testfoto’s beheren.');return;}
     if(busy||!ready||exporting)return;
     clear();const turn=serial;busy=true;controller=new AbortController();sync();const failures:string[]=[];
     try{
@@ -135,17 +170,31 @@ export function mountCollectibles(config:Config):{refresh:()=>void;clear:()=>voi
   });
   current.addEventListener('click',async()=>{
     if(busy||exporting||!ready)return;
-    const image=config.getImage();if(!image){show('Kies en kadreer eerst een foto in Hoofdlab.');return;}
+    const image=config.getImage();if(!image){show('Kies en kadreer eerst een foto bij Testfoto’s beheren.');return;}
     const turn=serial;
     try{const source=await toPng(makePortraitInput(image,config.getCrop()));if(turn===serial)await run([{key:'current',label:'Huidige foto',source}]);}
     catch(e){show(errorMessage(e));}
   });
+  for(const id of ACCESSORIES)partChoice.add(new Option(PART_LABEL[id],id));
+  for(const panel of [compareBodies,compareLayouts,compareProfiles])panel.addEventListener('toggle',refresh);
+  partChoice.addEventListener('change',updatePartControls);
+  partActive.addEventListener('change',updatePartControls);
+  partAdd.addEventListener('click',()=>{const b=selectedBody();if(b&&ACCESSORIES.includes(partChoice.value as AccessoryId))changeParts([...parts(b.id),newPart(partChoice.value as AccessoryId)],partChoice.value as AccessoryId);});
+  partRemove.addEventListener('click',()=>{const b=selectedBody();if(b)changeParts(parts(b.id).filter(p=>p.id!==partActive.value));});
+  partClear.addEventListener('click',()=>changeParts([]));
+  partPreset.addEventListener('click',()=>{
+    const b=selectedBody();if(!b)return;
+    const id=('A-'+b.id.split('-')[1]) as BodyId;
+    if(art.has(id)){selectBody(id);changeParts(aPlus(id));}
+  });
+  for(const input of partInputs)input.addEventListener('input',readPart);
+  partLayer.addEventListener('change',readPart);
   for(const [color,label] of PALETTES)background.add(new Option(label,color));
   bodyChoice.addEventListener('change',()=>{updateControls();refresh();});
   for(const input of [scale,x,y,rotation])input.addEventListener('input',readControls);
   for(const input of [background,tentacle])input.addEventListener('change',readControls);
   resetPrefs.addEventListener('click',()=>{const b=selectedBody();if(b){drafts[b.id]={...DEFAULT_COMPOSITION};updateControls();refresh();}});
-  savePrefs.addEventListener('click',()=>{const b=selectedBody();if(!b)return;preferences[b.id]=settings(b.id);try{localStorage.setItem(PREF_KEY,JSON.stringify(preferences));artStatus.textContent='Compositie voor '+BODY_LABEL[b.id]+' lokaal bewaard (alleen instellingen).';}catch{artStatus.textContent='Instellingen konden niet blijvend worden opgeslagen.';}});
+  savePrefs.addEventListener('click',()=>{const b=selectedBody();if(!b)return;preferences[b.id]=settings(b.id);try{localStorage.setItem(PREF_KEY,JSON.stringify(preferences));savedParts[b.id]=parts(b.id);localStorage.setItem(PART_KEY,JSON.stringify(savedParts));artStatus.textContent='Compositie voor '+BODY_LABEL[b.id]+' lokaal bewaard (alleen instellingen).';}catch{artStatus.textContent='Instellingen konden niet blijvend worden opgeslagen.';}});
   artInput.addEventListener('change',async()=>{const file=artInput.files?.[0],turn=++importSerial;artInput.value='';if(!file)return;try{if(file.size>2500000)throw Error('Illustratiepakket te groot.');await installArt(await file.text(),true,turn);}catch(e){if(turn===importSerial)artStatus.textContent=errorMessage(e);}});
   removeArt.addEventListener('click',()=>{const turn=++importSerial;try{localStorage.removeItem(ART_KEY);}catch{}void loadBundledArt(turn).catch(e=>{if(turn===importSerial)artStatus.textContent=errorMessage(e);});});
   for(const node of [format,layout,accent,person])node.addEventListener('change',refresh);
@@ -193,9 +242,14 @@ export function mountCollectibles(config:Config):{refresh:()=>void;clear:()=>voi
   const artTurn=++importSerial;
   void (async()=>{
     let raw:string|null=null;
+    try{const p=JSON.parse(localStorage.getItem(PART_KEY)||'{}');savedParts=Object.fromEntries(BODY_IDS.filter(id=>p?.[id]).map(id=>[id,normalizeParts(p[id])]));}catch{}
     try{preferences=loadPreferences(localStorage.getItem(PREF_KEY));raw=localStorage.getItem(ART_KEY);}catch{}
     try{if(raw)await installArt(raw,false,artTurn);else await loadBundledArt(artTurn);}
     catch(e){if(artTurn===importSerial){try{await loadBundledArt(artTurn);}catch{artStatus.textContent=errorMessage(e);}}}
+  })();
+  void (async()=>{
+    try{const r=await checked(await local('/stickerwall-accessoires-0.11.json'));accessories=await loadAccessories(await r.text());partStatus.textContent='9 losse illustraties klaar. Begin met A+ of voeg zelf onderdelen toe.';updatePartControls();refresh();}
+    catch(e){partStatus.textContent='Accessoires niet geladen: '+errorMessage(e);}
   })();
   void (async()=>{
     try{

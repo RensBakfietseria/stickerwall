@@ -5,38 +5,96 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#f7f3eb" />
     <title>Stickerwall · Proefatelier</title>
-    <meta name="description" content="Offline proefatelier voor persoonlijke zwart-wit stickers." />
+    <meta name="description" content="Lokaal ontwerpatelier voor persoonlijke verzamelkaarten en stickers." />
     <link rel="stylesheet" href="/src/stickerwall/style.css" />
   </head>
   <body>
     <header class="top">
       <div class="wordmark">STICKERWALL<span class="dot">.</span></div>
-      <div class="tag">PROEFATELIER <strong>0.10</strong></div>
+      <div class="tag">ONTWERPATELIER <strong>0.11</strong></div>
     </header>
     <main>
       <section class="intro">
         <p class="eyebrow">EEN KLEIN EXPERIMENT IN GROTE COMPLIMENTEN</p>
         <h1>Geef iemands kwaliteiten <em>een gezicht.</em></h1>
-        <p>Cartoon First: vergelijk eerst de cartoon en daarna de zwart-witsticker.</p>
+        <p>Maak persoonlijke verzamelkaarten met een lokaal gegenereerd animehoofd. De oude experimenten zijn opvouwbaar.</p>
       </section>
-      <div class="workspace">
-        <div class="controls">
-          <section class="panel" aria-labelledby="quality-title">
+      <div class="studio-workspace"><section class="panel" aria-labelledby="quality-title">
             <div class="step">01 / KENMERKEN</div>
             <h2 id="quality-title">Wat maakt deze collega bijzonder?</h2>
             <p>Kies maximaal drie kwaliteiten.</p>
             <div id="qualities" class="chips" aria-label="Kwaliteiten kiezen"></div>
-          </section>
-          <section class="panel" aria-labelledby="creature-title">
-            <div class="step">02 / HET WEZEN</div>
-            <h2 id="creature-title">Welk wezen past erbij?</h2>
-            <div id="creatures" class="creatures"></div>
-            <p class="footnote">De tekeningen zijn technische plaatsaanduiders. Definitieve handgetekende dierenillustraties komen later.</p>
-          </section>
-                    <section class="panel portrait-panel" aria-labelledby="portrait-title">
-            <div class="step">03 / HOOFDLAB</div>
-            <h2 id="portrait-title">Herken jij jezelf?</h2>
-            <p>Kies een onbewerkte portretfoto. Alle AI-modellen draaien op je eigen computer. De drie eenvoudige browserfilters blijven beschikbaar als referentie.</p>
+          </section><section class="panel collectible-lab" id="collectible-lab" aria-labelledby="collectible-title">
+            <div class="step">01 / COLLECTIBLES</div>
+            <h2 id="collectible-title">Ontwerp je fantasiebeest</h2>
+            <p>Kies een testportret, geef het een lichaam en maak het eigen. Alles blijft lokaal.</p>
+            <div class="studio-inline">
+              <button type="button" class="button dark" id="collectible-batch" disabled>Maak kaarten van vaste testset</button>
+              <button type="button" class="button light" id="collectible-current" disabled>Maak kaart van huidige foto</button>
+            </div>
+            <p id="collectible-status" class="status" role="status">Lokale modellen controleren…</p>
+            <div class="studio-editor"><div class="studio-controls"><div class="collectible-fields">
+              <label>Portret<select id="collectible-person"></select></label>
+              <label>Kaartformaat<select id="collectible-format"><option value="trading">63 × 88 mm · tradingcard</option><option value="postcard">100 × 150 mm · groot</option></select></label>
+              <label>Ontwerp<select id="collectible-layout"><option value="atelier">Atelier</option><option value="club">Club</option><option value="archive">Archief</option></select></label>
+              <label class="local-mask"><input type="checkbox" id="collectible-accent" /> Kleuraccent op dierenlichaam</label>
+            </div><div class="local-compare composition-lab">
+              
+              <h3>Vorm & compositie</h3>
+              
+              <details class="studio-fold"><summary>Illustratiepakket beheren</summary><label>Ander illustratiepakket <input id="composition-import" type="file" accept=".json,application/json" /></label><button class="button light" id="composition-remove" type="button">Herstel standaardillustraties</button></details>
+              <p class="status" id="composition-status" role="status">Originele illustraties A en B laden…</p>
+              <div class="collectible-fields">
+                <label>Dierenlichaam<select id="composition-body"><option value="">Bestaand lijf (0.9)</option></select></label>
+                <label>Achtergrondkleur<select id="composition-color"></select></label>
+                <label>Hoofdgrootte <output id="composition-scale-value">125</output><input id="composition-scale" type="range" min="75" max="180" step="5" value="125" /></label>
+                <label>Hoofd links / rechts <output id="composition-x-value">0</output><input id="composition-x" type="range" min="-70" max="70" value="0" /></label>
+                <label>Hoofd hoger / lager <output id="composition-y-value">0</output><input id="composition-y" type="range" min="-70" max="70" value="0" /></label>
+                <label>Scheefstand <output id="composition-rotation-value">0</output><input id="composition-rotation" type="range" min="-20" max="20" value="0" /></label>
+                <label class="local-mask"><input id="composition-tentacle" type="checkbox" /> Tentakel vóór hoofd (B-octopus)</label>
+              </div>
+              <div class="actions">
+                <button class="button light" id="composition-reset" type="button">Herstel compositie</button>
+                <button class="button dark" id="composition-save" type="button">Bewaar per dier/stijl</button>
+                </div>
+              
+              
+            </div><section class="fantasy-panel" aria-labelledby="fantasy-title">
+  <h3 id="fantasy-title">Fantasieonderdelen</h3>
+  <p class="helper" id="fantasy-status">Illustraties laden…</p>
+  <div class="studio-inline"><button class="button dark" id="fantasy-preset" type="button" disabled>Probeer A+</button><button class="button light" id="fantasy-clear" type="button" disabled>Wis onderdelen</button></div>
+  <div class="studio-inline"><label>Onderdeel toevoegen<select id="fantasy-choice"></select></label><button class="button light" id="fantasy-add" type="button" disabled>Voeg toe</button></div>
+  <div class="studio-inline"><label>Onderdeel bewerken<select id="fantasy-active"></select></label><button class="button light" id="fantasy-remove" type="button" disabled>Verwijder</button></div>
+  <div class="collectible-fields">
+    <label>Grootte <output id="fantasy-scale-value">100</output><input type="range" id="fantasy-scale" min="30" max="180" value="100" step="5"></label>
+    <label>Draaien <output id="fantasy-rotation-value">0</output><input type="range" id="fantasy-rotation" min="-180" max="180" value="0" step="5"></label>
+    <label>Links / rechts <output id="fantasy-x-value">0</output><input type="range" id="fantasy-x" min="-150" max="150" value="0"></label>
+    <label>Hoger / lager <output id="fantasy-y-value">0</output><input type="range" id="fantasy-y" min="-150" max="150" value="0"></label>
+    <label>Laag<select id="fantasy-layer"><option value="back">Achter lichaam en haar</option><option value="behind-head">Tussen lijf en hoofd</option><option value="front">Voor hoofd en haar</option></select></label>
+  </div>
+  <p class="helper">Maximaal zes losse onderdelen. A+ geeft een proefcombinatie op het lichte A-lijf. Bewaar de compositie om ook de onderdelen per dier/stijl te onthouden.</p>
+</section></div><div class="studio-preview"><div class="studio-preview-head"><h3>Jouw kaart</h3><span>Voorzijde</span></div><div class="studio-empty" id="collectible-empty">Klik op ‘Maak kaarten van vaste testset’ om te beginnen.</div><canvas id="collectible-front" width="315" height="440" aria-label="Voorzijde kaart"></canvas><details class="studio-fold" id="back-settings"><summary>Achterzijde & branding</summary><canvas id="collectible-back" width="315" height="440" aria-label="Achterzijde kaart"></canvas><h3>Achterkant personaliseren</h3>
+            <div class="collectible-fields">
+              <label>Organisatie of evenement<input id="collectible-brand" maxlength="60" placeholder="Een kaart om te bewaren" /></label>
+              <label>Logo (lokaal)<input id="collectible-logo" type="file" accept="image/png,image/jpeg,image/webp" /></label>
+              <button id="collectible-clear-logo" class="button light" type="button" disabled>Verwijder logo</button>
+              <label>Tekst<textarea id="collectible-message" rows="3" maxlength="160" placeholder="Iedereen heeft iets bijzonders. Welke kwaliteit zie jij in een ander?"></textarea></label>
+            </div></details></div></div>
+<details class="studio-fold" id="compare-bodies"><summary>Vergelijk de acht dieren · A en B</summary><div class="collectible-designs composition-designs" id="composition-designs"></div></details>
+<details class="studio-fold" id="compare-layouts"><summary>Vergelijk de zes kaartontwerpen</summary><div class="collectible-designs" id="collectible-designs"></div></details>
+<details class="studio-fold" id="compare-profiles"><summary>Bekijk dezelfde keuze op drie portretten</summary><div class="collectible-designs" id="collectible-profiles"></div></details>
+<details class="studio-fold" id="print-exports"><summary>Print & export · 300 ppi</summary><h3>Printbestanden · 300 ppi</h3>
+            <div class="actions collectible-exports">
+              <button class="button light" type="button" id="collectible-png-front" disabled>PNG voorzijde</button>
+              <button class="button light" type="button" id="collectible-png-back" disabled>PNG achterzijde</button>
+              <button class="button dark" type="button" id="collectible-pdf" disabled>PDF kaart (2 zijden)</button>
+              <button class="button dark" type="button" id="collectible-sheet" disabled>PDF A4-printvel</button>
+            </div>
+            <p class="footnote">A4: zes tradingcards (beschikbare testportretten herhaald) of één grote kaart. Twee pagina's met snijmarkeringen; achterzijde gespiegeld qua positie voor omslaan over de lange zijde. Print op 100%, niet passend maken. Test de uitlijning op gewoon papier. Geen automatische printeraansturing, geen afloop buiten de kaart. Exporteer alleen met toestemming; kaartbestanden worden niet automatisch bewaard.</p>
+            <button type="button" class="button light" id="collectible-clear" disabled>Wis kaartresultaten</button></details></section><details class="studio-fold studio-section" id="testset-settings"><summary>Testfoto’s beheren & technische portretproeven</summary><section class="panel portrait-panel" aria-labelledby="portrait-title">
+            <div class="step">TESTFOTO’S</div>
+            <h2 id="portrait-title">Eenmalig instellen of nieuwe foto kiezen</h2>
+            <p>Kies een portret en stel zo nodig de uitsnede bij. De vaste testset blijft alleen op deze computer.</p>
             <div class="photo-action">
               <label class="button dark upload-button" for="portrait-file">Kies een foto op je apparaat</label>
               <input id="portrait-file" class="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp" />
@@ -52,7 +110,7 @@
                 <input id="portrait-x" type="range" min="-75" max="75" value="0" step="5" />
                 <label for="portrait-y">Verticaal schuiven <output id="y-value">0</output></label>
                 <input id="portrait-y" type="range" min="-75" max="75" value="0" step="5" />
-                <label for="portrait-thickness">Browserfilters: lijnen dikker <output id="thickness-value">0</output></label>
+                </div><details class="studio-fold"><summary>Oude zwart-witfilters en U²-experimenten</summary><div class="adjustment"><label for="portrait-thickness">Browserfilters: lijnen dikker <output id="thickness-value">0</output></label>
                 <input id="portrait-thickness" type="range" min="0" max="2" value="0" step="1" />
               </div>
               <p class="helper">Vergelijk de drie resultaten en kies er één voor de sticker.</p>
@@ -167,88 +225,30 @@
                 <p class="footnote">Alle U²-afwerkingen behouden dezelfde hoofdvorm en gebruiken 226 × 252 punten binnen de bestaande 552-punts sticker. Adaptief houdt de buitenrand gelijk aan Sticker, vermindert inkt in herkend haar en versterkt bestaande lijnen rond ogen, bril, neus en mond. Geen nieuwe gelaatstrekken. APDrawingGAN en extra modellen blijven buiten deze build.</p>
                 <p class="footnote">Alleen de verkleinde uitsnede gaat naar de server op 127.0.0.1. Geen externe AI of opslag van portretfoto’s.</p>
               </div>
+              </details>
             </div>
             <div class="local-compare cartoon-lab" id="cartoon-lab">
-              <div class="step">03C / CARTOON FIRST · VASTE TESTSET</div>
+              <div class="step">VASTE TESTSET</div>
               <h3>Drie vaste portretten, één vergelijking</h3>
               <p>Ontwikkelmodus: kies éénmalig drie testfoto's waarvoor je toestemming hebt. Alleen de vaste uitsnede wordt lokaal bewaard (512 × 576); geen bezoekersfoto's automatisch opslaan. Testfoto's blijven bij updates behouden.</p>
               <div class="local-candidates cartoon-slots" id="cartoon-slots"></div>
               <p class="helper">Met 'Kies testfoto' wordt automatisch centraal uitgesneden. Voor precieze kadrering: kies een foto in Hoofdlab, pas de uitsnede aan en klik 'Bewaar huidige uitsnede' bij de juiste plek.</p>
-              <div class="photo-action">
+              <details class="studio-fold"><summary>Oude Cartoon First-modelvergelijking</summary><div class="photo-action">
                 <button class="button dark" type="button" id="cartoon-batch" disabled>Vergelijk alle drie</button>
                 <button class="button light" type="button" id="cartoon-current" disabled>Vergelijk huidige foto</button>
               </div>
               <label class="local-mask"><input type="checkbox" id="cartoon-body" /> Toon eindresultaten op het gekozen dier</label>
               <p class="status" id="cartoon-status" role="status">Lokale testset laden…</p>
               <div id="cartoon-results"></div>
-              <p class="footnote">U² Adaptief gebruikt standaardwaarden 180 / 0 / 1 / 1. De cartoons gebruiken de originele BiSeNet-hoofdvorm; Cartoon → U² gebruikt Sticker-afwerking, direct gebruikt een vaste drempel van 145. De oude schuiven gelden alleen voor 03B. Cartoonresultaten worden niet opgeslagen. Beide cartoonmodellen zijn experimenteel.</p>
+              <p class="footnote">U² Adaptief gebruikt standaardwaarden 180 / 0 / 1 / 1. De cartoons gebruiken de originele BiSeNet-hoofdvorm; Cartoon → U² gebruikt Sticker-afwerking, direct gebruikt een vaste drempel van 145. De oude schuiven gelden alleen voor 03B. Cartoonresultaten worden niet opgeslagen. Beide cartoonmodellen zijn experimenteel.</p></details>
             </div>
             <p class="footnote">Gewone foto's worden niet bewaard; alleen expliciet ingestelde testuitsneden blijven lokaal staan. Bij lokaal vergelijken gaat de uitsnede uitsluitend naar 127.0.0.1; geen cloud-AI.</p>
-          </section>
-          <section class="panel collectible-lab" id="collectible-lab" aria-labelledby="collectible-title">
-            <div class="step">04 / STICKY WALL COLLECTIBLES</div>
-            <h2 id="collectible-title">Een kaart om te bewaren</h2>
-            <p>Een lokaal gekleurd animehoofd, als uitgeknipte collage op het bestaande dierenlichaam. Vergelijk drie kaartstijlen met en zonder kleuraccenten.</p>
-            <div class="actions">
-              <button type="button" class="button dark" id="collectible-batch" disabled>Maak kaarten van vaste testset</button>
-              <button type="button" class="button light" id="collectible-current" disabled>Maak kaart van huidige foto</button>
-            </div>
-            <p id="collectible-status" class="status" role="status">Lokale modellen controleren…</p>
-            <div class="collectible-fields">
-              <label>Portret<select id="collectible-person"></select></label>
-              <label>Kaartformaat<select id="collectible-format"><option value="trading">63 × 88 mm · tradingcard</option><option value="postcard">100 × 150 mm · groot</option></select></label>
-              <label>Ontwerp<select id="collectible-layout"><option value="atelier">Atelier</option><option value="club">Club</option><option value="archive">Archief</option></select></label>
-              <label class="local-mask"><input type="checkbox" id="collectible-accent" /> Kleuraccent op dierenlichaam</label>
-            </div>
-            <div class="local-compare composition-lab">
-              <div class="step">04B / COMPOSITIELAB A + B</div>
-              <h3>Dezelfde animekop, acht dierenlichamen</h3>
-              <p>De acht originele illustraties van stijl A en B worden automatisch lokaal geladen. Kies een portret uit de vaste testset. Alleen expliciet bewaarde compositiewaarden worden opgeslagen, geen portretfoto’s.</p>
-              <label>Ander illustratiepakket (optioneel) <input id="composition-import" type="file" accept=".json,application/json" /></label>
-              <p class="status" id="composition-status" role="status">Originele illustraties A en B laden…</p>
-              <div class="collectible-fields">
-                <label>Dierenlichaam<select id="composition-body"><option value="">Bestaand lijf (0.9)</option></select></label>
-                <label>Achtergrondkleur<select id="composition-color"></select></label>
-                <label>Hoofdgrootte <output id="composition-scale-value">125</output><input id="composition-scale" type="range" min="75" max="180" step="5" value="125" /></label>
-                <label>Hoofd links / rechts <output id="composition-x-value">0</output><input id="composition-x" type="range" min="-70" max="70" value="0" /></label>
-                <label>Hoofd hoger / lager <output id="composition-y-value">0</output><input id="composition-y" type="range" min="-70" max="70" value="0" /></label>
-                <label>Scheefstand <output id="composition-rotation-value">0</output><input id="composition-rotation" type="range" min="-20" max="20" value="0" /></label>
-                <label class="local-mask"><input id="composition-tentacle" type="checkbox" /> Tentakel vóór hoofd (B-octopus)</label>
-              </div>
-              <div class="actions">
-                <button class="button light" id="composition-reset" type="button">Herstel compositie</button>
-                <button class="button dark" id="composition-save" type="button">Bewaar per dier/stijl</button>
-                <button class="button light" id="composition-remove" type="button">Herstel standaardillustraties</button>
-              </div>
-              <p class="helper">De gekozen verhoudingen worden samen passend gemaakt binnen het illustratievak. Bewaren slaat alleen getallen en een kleurkeuze op, niet het hoofd.</p>
-              <div class="collectible-designs composition-designs" id="composition-designs"></div>
-            </div>
-            <div class="collectible-pair">
-              <div><h3>Voorzijde</h3><canvas id="collectible-front" width="315" height="440" aria-label="Voorzijde kaart"></canvas></div>
-              <div><h3>Achterzijde</h3><canvas id="collectible-back" width="315" height="440" aria-label="Achterzijde kaart"></canvas></div>
-            </div>
-            <h3>Achterkant personaliseren</h3>
-            <div class="collectible-fields">
-              <label>Organisatie of evenement<input id="collectible-brand" maxlength="60" placeholder="Een kaart om te bewaren" /></label>
-              <label>Logo (lokaal)<input id="collectible-logo" type="file" accept="image/png,image/jpeg,image/webp" /></label>
-              <button id="collectible-clear-logo" class="button light" type="button" disabled>Verwijder logo</button>
-              <label>Tekst<textarea id="collectible-message" rows="3" maxlength="160" placeholder="Iedereen heeft iets bijzonders. Welke kwaliteit zie jij in een ander?"></textarea></label>
-            </div>
-            <h3>Vergelijk de zes ontwerpen</h3>
-            <div class="collectible-designs" id="collectible-designs"></div>
-            <h3>Dezelfde keuze op de testportretten</h3>
-            <div class="collectible-designs" id="collectible-profiles"></div>
-            <h3>Printbestanden · 300 ppi</h3>
-            <div class="actions collectible-exports">
-              <button class="button light" type="button" id="collectible-png-front" disabled>PNG voorzijde</button>
-              <button class="button light" type="button" id="collectible-png-back" disabled>PNG achterzijde</button>
-              <button class="button dark" type="button" id="collectible-pdf" disabled>PDF kaart (2 zijden)</button>
-              <button class="button dark" type="button" id="collectible-sheet" disabled>PDF A4-printvel</button>
-            </div>
-            <p class="footnote">A4: zes tradingcards (beschikbare testportretten herhaald) of één grote kaart. Twee pagina's met snijmarkeringen; achterzijde gespiegeld qua positie voor omslaan over de lange zijde. Print op 100%, niet passend maken. Test de uitlijning op gewoon papier. Geen automatische printeraansturing, geen afloop buiten de kaart. Exporteer alleen met toestemming; kaartbestanden worden niet automatisch bewaard.</p>
-            <button type="button" class="button light" id="collectible-clear" disabled>Wis kaartresultaten</button>
-          </section>
-          <section class="panel" aria-labelledby="print-title">
+          </section></details><details class="studio-fold studio-section" id="thermal-settings"><summary>Oud zwart-witstickerlab & printer</summary><div class="studio-legacy"><section class="panel" aria-labelledby="creature-title">
+            <div class="step">02 / HET WEZEN</div>
+            <h2 id="creature-title">Welk wezen past erbij?</h2>
+            <div id="creatures" class="creatures"></div>
+            <p class="footnote">De tekeningen zijn technische plaatsaanduiders. Definitieve handgetekende dierenillustraties komen later.</p>
+          </section><section class="panel" aria-labelledby="print-title">
             <div class="step">04 / AFDRUKKEN</div>
             <h2 id="print-title">Klaar om te proberen?</h2>
             <p>De voorvertoning is een echte zwart-wit 1-bit rasterafdruk van 552 pixels breed, voorbereid met Photoboot-code.</p>
@@ -258,9 +258,7 @@
             </div>
             <p id="printer-status" class="status" role="status">Nog geen printer verbonden. Het prototype werkt ook zonder printer.</p>
             <p class="footnote">Bluetooth printen werkt in Chrome of Edge via localhost. De printer zelf is nog niet getest met Stickerwall.</p>
-          </section>
-        </div>
-        <aside class="result">
+          </section><aside class="result">
           <div class="result-head">
             <span>04 / JOUW STICKER</span>
             <span>ZWART-WIT · 300 DPI DOELFORMAAT</span>
@@ -268,8 +266,7 @@
           <div class="paper"><canvas id="sticker" width="552" height="800" aria-label="Thermische sticker-voorvertoning"></canvas></div>
           <p id="sticker-name" class="sticker-name"></p>
           <p class="privacy"><span aria-hidden="true">●</span> Geen cloud-AI of archief. Lokale vergelijking stuurt alleen een uitsnede naar deze computer (127.0.0.1).</p>
-        </aside>
-      </div>
+        </aside></div></details></div>
     </main>
     <footer>Gebaseerd op Photoboot van Marijn Van de Voorde (MIT). Dit is een aparte technische proefversie, geen kant-en-klare AI-fotobooth.</footer>
     <script type="module" src="/src/stickerwall/main.ts"></script>
