@@ -35,7 +35,7 @@ function serif(ctx: CanvasRenderingContext2D, text: string, y: number, maxWidth 
   ctx.font = 'bold ' + size + 'px Georgia, serif';
   ctx.fillText(text, PRINT_WIDTH / 2, y, maxWidth);
 }
-function axolotl(ctx: CanvasRenderingContext2D) {
+function axolotl(ctx: CanvasRenderingContext2D, accent = '#fff') {
   // Tail sits behind the body.
   path(ctx, (c) => {
     c.moveTo(343, 498); c.bezierCurveTo(505, 418, 478, 559, 407, 563);
@@ -53,7 +53,7 @@ function axolotl(ctx: CanvasRenderingContext2D) {
     ctx.restore();
     void flip;
   }
-  ellipse(ctx, 276, 448, 117, 156);
+  ellipse(ctx, 276, 448, 117, 156, accent);
   ellipse(ctx, 276, 475, 78, 116, '#fff', 3);
   path(ctx, (c) => { c.moveTo(172, 440); c.bezierCurveTo(111, 430, 102, 496, 138, 529);
     c.bezierCurveTo(154, 545, 169, 521, 181, 489); c.closePath(); });
@@ -63,14 +63,14 @@ function axolotl(ctx: CanvasRenderingContext2D) {
   ellipse(ctx, 329, 580, 41, 19);
   for (const x of [219, 329]) for (let i = 0; i < 3; i++) line(ctx, [x - 15 + i * 15, 582, x - 16 + i * 15, 592], 2);
 }
-function dragon(ctx: CanvasRenderingContext2D) {
+function dragon(ctx: CanvasRenderingContext2D, accent = '#fff') {
   path(ctx, (c) => { c.moveTo(198, 363); c.bezierCurveTo(113, 288, 100, 335, 65, 346);
     c.bezierCurveTo(84, 375, 86, 428, 65, 469); c.bezierCurveTo(120, 449, 136, 483, 189, 491); c.closePath(); });
   path(ctx, (c) => { c.moveTo(357, 363); c.bezierCurveTo(446, 275, 460, 342, 484, 350);
     c.bezierCurveTo(474, 378, 478, 431, 502, 464); c.bezierCurveTo(442, 449, 421, 489, 366, 495); c.closePath(); });
   path(ctx, (c) => { c.moveTo(341, 505); c.bezierCurveTo(470, 516, 462, 560, 426, 579);
     c.bezierCurveTo(435, 540, 378, 549, 349, 562); c.closePath(); });
-  ellipse(ctx, 276, 458, 117, 145);
+  ellipse(ctx, 276, 458, 117, 145, accent);
   ellipse(ctx, 276, 483, 69, 98, '#fff', 3);
   for (let y = 413; y < 555; y += 19) line(ctx, [231, y, 321, y], 2);
   path(ctx, (c) => { c.moveTo(181, 440); c.bezierCurveTo(120, 450, 126, 522, 165, 533);
@@ -81,12 +81,12 @@ function dragon(ctx: CanvasRenderingContext2D) {
   ellipse(ctx, 326, 579, 42, 23);
   for (const x of [211, 226, 241, 311, 326, 341]) line(ctx, [x, 590, x + 4, 601], 3);
 }
-function penguin(ctx: CanvasRenderingContext2D) {
+function penguin(ctx: CanvasRenderingContext2D, accent = ink) {
   path(ctx, (c) => { c.moveTo(182, 409); c.bezierCurveTo(92, 381, 121, 502, 150, 537);
     c.bezierCurveTo(175, 544, 186, 495, 211, 454); c.closePath(); });
   path(ctx, (c) => { c.moveTo(369, 409); c.bezierCurveTo(469, 387, 429, 516, 403, 538);
     c.bezierCurveTo(379, 548, 366, 484, 342, 452); c.closePath(); });
-  ellipse(ctx, 276, 450, 112, 156, ink, 5);
+  ellipse(ctx, 276, 450, 112, 156, accent, 5);
   ellipse(ctx, 276, 462, 76, 124, '#fff', 4);
   path(ctx, (c) => { c.moveTo(250, 580); c.bezierCurveTo(198, 590, 188, 614, 217, 621);
     c.lineTo(275, 612); c.closePath(); }, '#fff', 5);
@@ -179,4 +179,12 @@ export function drawSticker(creature: Creature, qualities: readonly Quality[], p
   ctx.font = '11px Arial, sans-serif';
   ctx.fillText('STICKERWALL / ILLUSTRATIEPROEF MET FICTIEF HOOFD', 276, 759);
   return canvas;
+}
+
+
+/** Same original animal paths, without the thermal frame, titles or head. */
+export function drawCardAnimal(ctx: CanvasRenderingContext2D, creature: Creature, accent: string | null): void {
+  if (creature === 'axolotl') axolotl(ctx, accent ?? '#fff');
+  else if (creature === 'dragon') dragon(ctx, accent ?? '#fff');
+  else penguin(ctx, accent ?? ink);
 }
