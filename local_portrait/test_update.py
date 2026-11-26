@@ -21,6 +21,7 @@ class UpdateTests(unittest.TestCase):
         files["local_portrait/assets/model.onnx"] = b"model"
         files[".local-portrait-venv/Scripts/python.exe"] = b"python"
         files["photos/portrait.png"] = b"private"
+        files[".stickerwall-testset/kaal-bril.png"] = b"private"
         self.assertEqual(set(update.archive_files(bundle(files))), update.REQUIRED)
 
     def test_bad_archive(self):

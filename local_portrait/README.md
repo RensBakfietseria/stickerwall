@@ -1,6 +1,17 @@
-# Stickerwall 0.7 — U² Adaptief
+# Stickerwall 0.8 — Cartoon First
 
 Vijf tekenvarianten: Contour, Contour+ (BiSeNet + Contour), U²-Net Portrait (met BiSeNet), OpenSketch en Anime. Alle verwerking lokaal op CPU. Geen G'MIC of PyTorch. APDrawingGAN++ blijft onderzocht, niet actief.
+
+## Build 0.8
+
+Het aparte Cartoon First-ontwikkellab (03C) bewaart uitsluitend expliciet ingestelde testuitsneden in de verborgen lokale map `.stickerwall-testset` (drie vaste 512 × 576 PNG's). Geen namen of EXIF; geen gewone bezoekersfoto's. De map valt buiten de updater, git en de webroot. Laad de drie testfoto's één keer, of bewaar een handmatig gekadreerde huidige uitsnede. Daarna 'Vergelijk alle drie'. Testfoto's worden bij herladen opgehaald van de loopbackserver en blijven op schijf totdat je 'Wis testfoto' kiest. Bewaar alleen foto's met toestemming; gewone Windows-bestandsbeveiliging, geen versleuteling in deze prototypebuild. Resultaten blijven in geheugen. Gebruik geen synchronisatiemap. Testmodus is geen bezoekersfunctie.
+
+Twee nieuwe ONNX-gewichten (samen ca. 24 MB): Photo2Cartoon (minivision-ai, gepinde kopie LiteraturePro/Photo2cartoon) en AnimeGANv2 face_paint_512_v2 (bryandlee/Kazuhito00). Beide gebruiken RGB NCHW [-1,1], respectievelijk 256 en 512 vierkant met witte padding en de bestaande BiSeNet-uitsnede. Photo2Cartoon gebruikt dus niet de oorspronkelijke landmarkrotatie en segmentatie; model en voorbewerking zijn experimenteel. Oorspronkelijke hoofdvorm wordt gehandhaafd. Elke kleurcartoon gaat naar U² Sticker (180/0) en naar directe grijswaardedrempel (145/0) met dezelfde natuurlijke buitenlijn. De huidige U² Adaptief (180/0/1/1) is de vaste referentie. Geen automatische kwaliteitsclaim. De drie foto's worden sequentieel verwerkt; de oude vergelijker blijft beschikbaar. Modellicenties en trainingsdata nog niet commercieel gevalideerd. Photo2Cartoon is getraind op een beperkte doelgroep; herkenbaarheid kan per gezicht verschillen.
+
+Bronnen:
+- https://github.com/minivision-ai/photo2cartoon
+- https://github.com/LiteraturePro/Photo2cartoon/tree/0a53ec1c5922e46127c00faca6cf8724324ea724
+- https://github.com/Kazuhito00/AnimeGANv2-ONNX-Sample/tree/1597c3ad45b2db87e1ac4944ee62cfdb30d0670d
 
 ## Build 0.7
 
@@ -84,7 +95,7 @@ op 127.0.0.1:8765. De server verwerkt pixels in geheugen; er zijn geen
 uitgaande API-aanroepen, tijdelijke portretbestanden of fotogalerij.
 De server bewaart geen requestlog. De browser heeft een restrictief CSP en
 weigert redirects voor modelrequests. De portretvergelijking werkt alleen
-met protocolversie 7 op de lokale server, niet op een externe Vercel-host.
+met protocolversie 8 op de lokale server, niet op een externe Vercel-host.
 Dit is ontwerp en technische test, geen volledige privacy- of securityaudit.
 Gebruik een eigen onbewerkte foto om de artistieke kwaliteit te beoordelen.
 

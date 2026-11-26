@@ -3,7 +3,7 @@ name: Sticky Wall local portrait engines
 on:
   push:
     branches:
-      - stickerwall-0-7-adaptive
+      - stickerwall-0-8-cartoon-first
   pull_request:
     paths:
       - 'local_portrait/**'
@@ -59,6 +59,9 @@ jobs:
       - name: Real browser test of U2 presets and optional references on public upstream fixture
         shell: pwsh
         run: node local_portrait/browser_smoke.mjs "$env:RUNNER_TEMP\stickerwall-public-face.jpg"
+      - name: Real Cartoon First browser and persistent batch test
+        shell: pwsh
+        run: node local_portrait/cartoon_smoke.mjs "$env:RUNNER_TEMP\stickerwall-public-face.jpg"
       - name: Verify setup is reusable
         shell: pwsh
         run: powershell -ExecutionPolicy Bypass -File .\local_portrait\setup.ps1

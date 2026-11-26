@@ -21,7 +21,7 @@ try {
   for (let i = 0; i < 80; i++) {
     try {
       const status = await fetch(base + '/api/local/status').then(r => r.json());
-      if (status.protocol === 7) break;
+      if (status.protocol === 8) break;
     } catch {}
     if (i === 79) throw Error('local server startup failed');
     await new Promise(resolve => setTimeout(resolve, 250));
