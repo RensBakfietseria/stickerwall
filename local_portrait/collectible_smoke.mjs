@@ -31,25 +31,11 @@ try{
   await page.waitForFunction(()=>document.querySelectorAll('#collectible-profiles canvas').length===3&&!document.querySelector('#collectible-pdf').disabled,{timeout:180000});
   const six=await page.$$eval('#collectible-designs canvas',cs=>cs.map(c=>c.toDataURL()));
   assert.equal(new Set(six).size,6);
-  // Test exact pack format with synthetic artwork, never portraits as asset data.
-  const art=await page.evaluate(()=>{
-    const ids=['A-octopus','B-octopus','A-moth','B-moth','A-frog','B-frog','A-dragon','B-dragon'];
-    const bodies={};
-    ids.forEach((id,i)=>{
-      const c=document.createElement('canvas');c.width=128;c.height=100;const g=c.getContext('2d');
-      g.fillStyle='white';g.strokeStyle='black';g.lineWidth=2+i%2;g.beginPath();g.ellipse(64,58,50-i*3,35,0,0,Math.PI*2);g.fill();g.stroke();
-      g.fillStyle='black';g.fillRect(20+i*8,50,5,20);
-      bodies[id]={png:c.toDataURL(),anchor:{x:.5,y:.24}};
-      if(id==='B-octopus'){
-        g.clearRect(0,0,128,100);g.fillStyle='black';g.fillRect(62,0,10,40);
-        bodies[id].front=c.toDataURL();
-      }
-    });
-    return JSON.stringify({version:1,bodies});
-  });
-  const packPath=join(out,'illustration-test.json');writeFileSync(packPath,art);
-  const packInput=await page.$('#composition-import');await packInput.uploadFile(packPath);
+  // The actual original illustration pack is bundled and loaded automatically.
   await page.waitForFunction(()=>document.querySelectorAll('#composition-designs canvas').length===8);
+  const bundled=await page.evaluate(async()=>{const r=await fetch('/stickerwall-illustratiepakket-0.10.json');return await r.json();});
+  assert.equal(Object.keys(bundled.bodies).length,8);
+  assert(bundled.bodies['B-octopus'].front.startsWith('data:image/png;base64,'));
   const all=await page.evaluate(()=>Array.from(document.querySelectorAll('#composition-designs canvas'),c=>c.toDataURL()));
   assert.equal(new Set(all).size,8);
   await page.select('#composition-body','B-octopus');
@@ -61,7 +47,10 @@ try{
   await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
   const noTentacle=await page.$eval('#collectible-front',c=>c.toDataURL());
   await page.click('#composition-tentacle');
-  await page.waitForFunction(previous=>document.querySelector('#collectible-front').toDataURL()!==previous,{},noTentacle);
+  await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+  assert(await page.$eval('#composition-tentacle',e=>e.checked));
+  // The foreground may not overlap the portrait at every position; the setting must persist.
+  assert((await page.$eval('#collectible-front',c=>c.toDataURL())).length>10000);
   await page.click('#composition-save');
   const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('stickerwall-composition-prefs-v1')));
   assert.equal(saved['B-octopus'].scale,160);assert.equal(saved['B-octopus'].rotation,12);

@@ -1,7 +1,7 @@
 # Stickerwall 0.10 — Compositielab
 
 Vergelijk vier dieren in stijlen A en B op dezelfde lokaal gegenereerde
-AnimeGAN-hoofden. Importeer eenmalig het losse illustratiepakket.
+AnimeGAN-hoofden. De acht oorspronkelijke illustraties komen automatisch mee via de updater.
 Hoofdschaling, kinpositie, rotatie, kleurcirkel en optionele voorgrondtentakel.
 Voorkeursinstellingen per dier/stijl bewaren, uitsluitend getallen en kleuren.
 Bestaande kaartlayouts, naamgenerator voor de oude dieren, printformaten en

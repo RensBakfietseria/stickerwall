@@ -32,6 +32,10 @@ export function mountCollectibles(config:Config):{refresh:()=>void;clear:()=>voi
   let entries:Entry[]=[],logo:ImageBitmap|null=null,ready=false,busy=false,exporting=false,serial=0,logoSerial=0,controller:AbortController|null=null;
   function show(s:string){status.textContent=s;}
   function selected(){return entries.find(e=>e.key===person.value)??entries[0];}
+  async function loadBundledArt(turn:number){
+    const response=await checked(await local('/stickerwall-illustratiepakket-0.10.json'));
+    await installArt(await response.text(),false,turn);
+  }
   function selectedBody(){return art.get(bodyChoice.value as BodyId);}
   function settings(id:BodyId):Composition{return normalizeComposition(drafts[id]??preferences[id]??DEFAULT_COMPOSITION);}
   function design(entry:Entry,l=layout.value as Layout,a=accent.checked,b=selectedBody()):Design{return {format:format.value as Format,layout:l,accent:a,creature:config.getCreature(),qualities:config.getQualities(),portrait:entry.portrait,body:b,composition:b?settings(b.id):undefined};}
@@ -143,7 +147,7 @@ export function mountCollectibles(config:Config):{refresh:()=>void;clear:()=>voi
   resetPrefs.addEventListener('click',()=>{const b=selectedBody();if(b){drafts[b.id]={...DEFAULT_COMPOSITION};updateControls();refresh();}});
   savePrefs.addEventListener('click',()=>{const b=selectedBody();if(!b)return;preferences[b.id]=settings(b.id);try{localStorage.setItem(PREF_KEY,JSON.stringify(preferences));artStatus.textContent='Compositie voor '+BODY_LABEL[b.id]+' lokaal bewaard (alleen instellingen).';}catch{artStatus.textContent='Instellingen konden niet blijvend worden opgeslagen.';}});
   artInput.addEventListener('change',async()=>{const file=artInput.files?.[0],turn=++importSerial;artInput.value='';if(!file)return;try{if(file.size>2500000)throw Error('Illustratiepakket te groot.');await installArt(await file.text(),true,turn);}catch(e){if(turn===importSerial)artStatus.textContent=errorMessage(e);}});
-  removeArt.addEventListener('click',()=>{++importSerial;try{localStorage.removeItem(ART_KEY);}catch{}art.clear();populateArt();artStatus.textContent='Illustratiepakket verwijderd. Portretten en instellingen zijn niet gewijzigd.';});
+  removeArt.addEventListener('click',()=>{const turn=++importSerial;try{localStorage.removeItem(ART_KEY);}catch{}void loadBundledArt(turn).catch(e=>{if(turn===importSerial)artStatus.textContent=errorMessage(e);});});
   for(const node of [format,layout,accent,person])node.addEventListener('change',refresh);
   for(const node of [brand,message])node.addEventListener('input',refresh);
   logoInput.addEventListener('change',async()=>{
@@ -186,7 +190,13 @@ export function mountCollectibles(config:Config):{refresh:()=>void;clear:()=>voi
   exportButtons.forEach((b,i)=>b.addEventListener('click',()=>void exportFile((['front','back','pdf','sheet'] as const)[i])));
   if(location.origin!=='http://127.0.0.1:8765'&&location.origin!=='http://localhost:8765'){root.hidden=true;return {refresh,clear};}
   updateControls();refresh();
-  try{preferences=loadPreferences(localStorage.getItem(PREF_KEY));const raw=localStorage.getItem(ART_KEY);if(raw)void installArt(raw,false,++importSerial).catch(e=>{artStatus.textContent=errorMessage(e);});}catch{artStatus.textContent='Lokale browseropslag niet beschikbaar. Importeer het pakket per sessie.';}
+  const artTurn=++importSerial;
+  void (async()=>{
+    let raw:string|null=null;
+    try{preferences=loadPreferences(localStorage.getItem(PREF_KEY));raw=localStorage.getItem(ART_KEY);}catch{}
+    try{if(raw)await installArt(raw,false,artTurn);else await loadBundledArt(artTurn);}
+    catch(e){if(artTurn===importSerial){try{await loadBundledArt(artTurn);}catch{artStatus.textContent=errorMessage(e);}}}
+  })();
   void (async()=>{
     try{
       const info=await (await checked(await local('/api/local/status'))).json();

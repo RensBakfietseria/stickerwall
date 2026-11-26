@@ -203,9 +203,9 @@
             <div class="local-compare composition-lab">
               <div class="step">04B / COMPOSITIELAB A + B</div>
               <h3>Dezelfde animekop, acht dierenlichamen</h3>
-              <p>Importeer eenmalig het losse Stickerwall-illustratiepakket. Alleen de illustraties en compositiewaarden worden in deze browser bewaard; geen portretfoto’s. Kies daarna een portret uit de vaste testset.</p>
-              <label>Illustratiepakket <input id="composition-import" type="file" accept=".json,application/json" /></label>
-              <p class="status" id="composition-status" role="status">Importeer het illustratiepakket om A en B te vergelijken.</p>
+              <p>De acht originele illustraties van stijl A en B worden automatisch lokaal geladen. Kies een portret uit de vaste testset. Alleen expliciet bewaarde compositiewaarden worden opgeslagen, geen portretfoto’s.</p>
+              <label>Ander illustratiepakket (optioneel) <input id="composition-import" type="file" accept=".json,application/json" /></label>
+              <p class="status" id="composition-status" role="status">Originele illustraties A en B laden…</p>
               <div class="collectible-fields">
                 <label>Dierenlichaam<select id="composition-body"><option value="">Bestaand lijf (0.9)</option></select></label>
                 <label>Achtergrondkleur<select id="composition-color"></select></label>
@@ -218,7 +218,7 @@
               <div class="actions">
                 <button class="button light" id="composition-reset" type="button">Herstel compositie</button>
                 <button class="button dark" id="composition-save" type="button">Bewaar per dier/stijl</button>
-                <button class="button light" id="composition-remove" type="button">Verwijder illustratiepakket</button>
+                <button class="button light" id="composition-remove" type="button">Herstel standaardillustraties</button>
               </div>
               <p class="helper">De gekozen verhoudingen worden samen passend gemaakt binnen het illustratievak. Bewaren slaat alleen getallen en een kleurkeuze op, niet het hoofd.</p>
               <div class="collectible-designs composition-designs" id="composition-designs"></div>
