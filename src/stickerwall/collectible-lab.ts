@@ -28,7 +28,7 @@ export function mountCollectibles(config:Config):{refresh:()=>void;clear:()=>voi
   const bodyGrid=el<HTMLDivElement>('composition-designs'),scale=el<HTMLInputElement>('composition-scale'),x=el<HTMLInputElement>('composition-x'),y=el<HTMLInputElement>('composition-y'),rotation=el<HTMLInputElement>('composition-rotation');
   const background=el<HTMLSelectElement>('composition-color'),tentacle=el<HTMLInputElement>('composition-tentacle');
   const savePrefs=el<HTMLButtonElement>('composition-save'),resetPrefs=el<HTMLButtonElement>('composition-reset'),removeArt=el<HTMLButtonElement>('composition-remove');
-  let art=new Map<BodyId,BodyAsset>(),preferences:Partial<Record<BodyId,Composition>>={},drafts:Partial<Record<BodyId,Composition>>={},importSerial=0;
+  let art=new Map<BodyId,BodyAsset>(),preferences:Partial<Record<BodyId,Composition>>={},drafts:Partial<Record<BodyId,Composition>>={},importSerial=0,compositionFrame=0;
   let entries:Entry[]=[],logo:ImageBitmap|null=null,ready=false,busy=false,exporting=false,serial=0,logoSerial=0,controller:AbortController|null=null;
   function show(s:string){status.textContent=s;}
   function selected(){return entries.find(e=>e.key===person.value)??entries[0];}
@@ -46,7 +46,7 @@ export function mountCollectibles(config:Config):{refresh:()=>void;clear:()=>voi
     const b=selectedBody();if(!b)return;
     drafts[b.id]=normalizeComposition({scale:Number(scale.value),x:Number(x.value),y:Number(y.value),rotation:Number(rotation.value),background:background.value,tentacle:tentacle.checked});
     for(const input of [scale,x,y,rotation])el<HTMLOutputElement>(input.id+'-value').value=input.value;
-    refresh();
+    cancelAnimationFrame(compositionFrame);compositionFrame=requestAnimationFrame(refresh);
   }
   function selectBody(id:string){bodyChoice.value=id;updateControls();refresh();}
   function populateArt(){

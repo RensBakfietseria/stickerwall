@@ -56,12 +56,14 @@ function title(c:CanvasRenderingContext2D,value:string,y:number,maxWidth:number,
   for(let i=0;i<rows.length;i++)fit(c,rows[i],315,y+(i-(rows.length-1)/2)*size*1.12,maxWidth,size,color);
 }
 /** Alpha-backed white die-cut rim, not a rectangular background. */
+const cutoutCache=new WeakMap<object,HTMLCanvasElement>();
 function cutout(p:Portrait):HTMLCanvasElement{
+  const cached=cutoutCache.get(p.image);if(cached)return cached;
   const c=canvas(p.width+16,p.height+16),ctx=c.getContext('2d')!;
   const silhouette=canvas(p.width,p.height),s=silhouette.getContext('2d')!;
   s.drawImage(p.image,0,0,p.width,p.height);s.globalCompositeOperation='source-in';s.fillStyle='#fff';s.fillRect(0,0,p.width,p.height);
   for(let angle=0;angle<Math.PI*2;angle+=Math.PI/8)ctx.drawImage(silhouette,8+Math.cos(angle)*6,8+Math.sin(angle)*6);
-  ctx.drawImage(p.image,8,8,p.width,p.height);return c;
+  ctx.drawImage(p.image,8,8,p.width,p.height);cutoutCache.set(p.image,c);return c;
 }
 function character(c:CanvasRenderingContext2D,d:Design,x:number,y:number,w:number,h:number){
   if(d.body){

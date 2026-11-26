@@ -1,6 +1,12 @@
-# Stickerwall 0.9 — Collectibles
+# Stickerwall 0.10 — Compositielab
 
 Vijf tekenvarianten: Contour, Contour+ (BiSeNet + Contour), U²-Net Portrait (met BiSeNet), OpenSketch en Anime. Alle verwerking lokaal op CPU. Geen G'MIC of PyTorch. APDrawingGAN++ blijft onderzocht, niet actief.
+
+## Build 0.10
+
+Sectie 04B: importeer eenmalig het losse JSON-illustratiepakket uit de stijlstudies A en B. Het bevat acht transparante dierenlichamen en de voorgrondtentakel van B-octopus. De oorspronkelijke tekeningen zijn uitgesneden uit de overzichtsafbeeldingen, niet nagetekend. Het pakket is een los lokaal bestand, niet automatisch meegeleverd via de updater. Dit voorkomt een verliesgevende conversie van de illustraties. Browseropslag op dezelfde localhost-origin bewaart alleen het illustratiepakket en de expliciet opgeslagen getalsmatige compositievoorkeuren (geen portretten, logo's, kaartresultaten). Bij het wissen van browsergegevens moet het pakket opnieuw worden geïmporteerd.
+
+Gebruik 'Maak kaarten van vaste testset' en kies één testportret. Acht lichamen naast elkaar in A/B-paren, bestaande kaartontwerpen en export behouden. Hoofdgrootte 75–180%, horizontaal/verticaal, rotatie ±20°, zes kleurpaletten en een optionele voorgrondtentakel op B-octopus. Volledige compositie past binnen het illustratievak; de verhoudingen blijven behouden. Bewaar expliciet per dier/stijl. Terug naar 'Bestaand lijf (0.9)' blijft mogelijk. De kleurroute en protocol 9 zijn ongewijzigd. Geen extra modelgewichten. Artistieke kwaliteit, daadwerkelijke afdrukresolutie van de uitgesneden illustraties en fysieke proefdruk moeten nog worden beoordeeld.
 
 ## Build 0.9
 

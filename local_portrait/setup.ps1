@@ -33,5 +33,5 @@ if (!(Test-Path "node_modules\.bin\vite.cmd") -or ($env:STICKERWALL_REFRESH_NODE
 if ($LASTEXITCODE -ne 0) { throw "Stickerwall-build mislukt." }
 
 # No G'MIC download/execution or changes to Windows security.
-Write-Host "Collectibles 0.9 klaar: lokale kleurenkaarten en printbestanden." -ForegroundColor Green
+Write-Host "Compositielab 0.10 klaar: importeer eenmalig het illustratiepakket." -ForegroundColor Green
 Write-Host "Internet mag uit. Start: powershell -ExecutionPolicy Bypass -File .\local_portrait\start.ps1"
