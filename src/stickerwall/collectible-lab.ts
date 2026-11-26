@@ -2,6 +2,7 @@ import {FORMATS,LAYOUTS,LAYOUT_NAMES,renderFront,renderBack,type Design,type For
 import {canvasPng,download,makePdf,printSheet} from './collectible-print.ts';
 import {makePortraitInput,type Crop} from './portrait.ts';
 import type {Creature,Quality} from './model.ts';
+import {BODY_IDS,BODY_LABEL,PALETTES,ART_KEY,PREF_KEY,DEFAULT_COMPOSITION,normalizeComposition,loadPreferences,loadPack,type BodyId,type BodyAsset,type Composition} from './composition.ts';
 
 const SLOTS=[['kaal-bril','Kaal + bril'],['lang-haar','Lang haar + bril'],['krullen','Krullend haar']] as const;
 type Entry={key:string;label:string;portrait:Portrait};
@@ -23,10 +24,42 @@ export function mountCollectibles(config:Config):{refresh:()=>void;clear:()=>voi
   const brand=el<HTMLInputElement>('collectible-brand'),message=el<HTMLTextAreaElement>('collectible-message'),logoInput=el<HTMLInputElement>('collectible-logo');
   const clearLogo=el<HTMLButtonElement>('collectible-clear-logo'),clearButton=el<HTMLButtonElement>('collectible-clear');
   const exportButtons=[el<HTMLButtonElement>('collectible-png-front'),el<HTMLButtonElement>('collectible-png-back'),el<HTMLButtonElement>('collectible-pdf'),el<HTMLButtonElement>('collectible-sheet')];
+  const artInput=el<HTMLInputElement>('composition-import'),artStatus=el<HTMLParagraphElement>('composition-status'),bodyChoice=el<HTMLSelectElement>('composition-body');
+  const bodyGrid=el<HTMLDivElement>('composition-designs'),scale=el<HTMLInputElement>('composition-scale'),x=el<HTMLInputElement>('composition-x'),y=el<HTMLInputElement>('composition-y'),rotation=el<HTMLInputElement>('composition-rotation');
+  const background=el<HTMLSelectElement>('composition-color'),tentacle=el<HTMLInputElement>('composition-tentacle');
+  const savePrefs=el<HTMLButtonElement>('composition-save'),resetPrefs=el<HTMLButtonElement>('composition-reset'),removeArt=el<HTMLButtonElement>('composition-remove');
+  let art=new Map<BodyId,BodyAsset>(),preferences:Partial<Record<BodyId,Composition>>={},drafts:Partial<Record<BodyId,Composition>>={},importSerial=0;
   let entries:Entry[]=[],logo:ImageBitmap|null=null,ready=false,busy=false,exporting=false,serial=0,logoSerial=0,controller:AbortController|null=null;
   function show(s:string){status.textContent=s;}
   function selected(){return entries.find(e=>e.key===person.value)??entries[0];}
-  function design(entry:Entry,l=layout.value as Layout,a=accent.checked):Design{return {format:format.value as Format,layout:l,accent:a,creature:config.getCreature(),qualities:config.getQualities(),portrait:entry.portrait};}
+  function selectedBody(){return art.get(bodyChoice.value as BodyId);}
+  function settings(id:BodyId):Composition{return normalizeComposition(drafts[id]??preferences[id]??DEFAULT_COMPOSITION);}
+  function design(entry:Entry,l=layout.value as Layout,a=accent.checked,b=selectedBody()):Design{return {format:format.value as Format,layout:l,accent:a,creature:config.getCreature(),qualities:config.getQualities(),portrait:entry.portrait,body:b,composition:b?settings(b.id):undefined};}
+  function updateControls(){
+    const b=selectedBody(),v=b?settings(b.id):DEFAULT_COMPOSITION;
+    scale.value=String(v.scale);x.value=String(v.x);y.value=String(v.y);rotation.value=String(v.rotation);background.value=v.background;tentacle.checked=v.tentacle;
+    for(const input of [scale,x,y,rotation,background,savePrefs,resetPrefs])input.disabled=!b;
+    tentacle.disabled=!b?.front;removeArt.disabled=!art.size;
+    for(const input of [scale,x,y,rotation])el<HTMLOutputElement>(input.id+'-value').value=input.value;
+  }
+  function readControls(){
+    const b=selectedBody();if(!b)return;
+    drafts[b.id]=normalizeComposition({scale:Number(scale.value),x:Number(x.value),y:Number(y.value),rotation:Number(rotation.value),background:background.value,tentacle:tentacle.checked});
+    for(const input of [scale,x,y,rotation])el<HTMLOutputElement>(input.id+'-value').value=input.value;
+    refresh();
+  }
+  function selectBody(id:string){bodyChoice.value=id;updateControls();refresh();}
+  function populateArt(){
+    const previous=bodyChoice.value;bodyChoice.replaceChildren(new Option('Bestaand lijf (0.9)',''));
+    for(const id of BODY_IDS)if(art.has(id))bodyChoice.add(new Option(BODY_LABEL[id],id));
+    bodyChoice.value=art.has(previous as BodyId)?previous:art.size?'A-octopus':'';
+    updateControls();refresh();
+  }
+  async function installArt(raw:string,persist:boolean,turn:number){
+    const loaded=await loadPack(raw);if(turn!==importSerial)return;
+    if(persist){try{localStorage.setItem(ART_KEY,raw);}catch{artStatus.textContent='Opslaglimiet bereikt. Pakket alleen voor deze sessie geladen.';art=loaded;populateArt();return;}}
+    art=loaded;populateArt();artStatus.textContent='8 illustraties lokaal klaar. A en B zijn direct vergelijkbaar.';
+  }
   function backData():Back{return {brand:brand.value,message:message.value,logo,logoWidth:logo?.width??0,logoHeight:logo?.height??0};}
   function sync(){
     batch.disabled=!ready||busy||exporting;current.disabled=!ready||busy||exporting;
@@ -44,13 +77,16 @@ export function mountCollectibles(config:Config):{refresh:()=>void;clear:()=>voi
   function refresh(){
     const entry=selected(),f=format.value as Format,l=layout.value as Layout;
     paint(back,renderBack(f,l,backData(),true));
-    comparisons.replaceChildren();profiles.replaceChildren();
+    comparisons.replaceChildren();profiles.replaceChildren();bodyGrid.replaceChildren();
     if(!entry){front.width=315;front.height=440;front.getContext('2d')!.clearRect(0,0,315,440);sync();return;}
     paint(front,renderFront(design(entry),true));
     for(const style of LAYOUTS)for(const colored of [false,true]){
       thumbnail(comparisons,renderFront(design(entry,style,colored),true),LAYOUT_NAMES[style]+' · '+(colored?'kleuraccent':'zwart-wit lijf'),()=>{
         layout.value=style;accent.checked=colored;refresh();
       });
+    }
+    for(const id of BODY_IDS){
+      const b=art.get(id);if(b)thumbnail(bodyGrid,renderFront(design(entry,l,accent.checked,b),true),BODY_LABEL[id],()=>selectBody(id));
     }
     for(const e of entries)thumbnail(profiles,renderFront(design(e),true),e.label,()=>{person.value=e.key;refresh();});
     sync();
@@ -100,6 +136,14 @@ export function mountCollectibles(config:Config):{refresh:()=>void;clear:()=>voi
     try{const source=await toPng(makePortraitInput(image,config.getCrop()));if(turn===serial)await run([{key:'current',label:'Huidige foto',source}]);}
     catch(e){show(errorMessage(e));}
   });
+  for(const [color,label] of PALETTES)background.add(new Option(label,color));
+  bodyChoice.addEventListener('change',()=>{updateControls();refresh();});
+  for(const input of [scale,x,y,rotation])input.addEventListener('input',readControls);
+  for(const input of [background,tentacle])input.addEventListener('change',readControls);
+  resetPrefs.addEventListener('click',()=>{const b=selectedBody();if(b){drafts[b.id]={...DEFAULT_COMPOSITION};updateControls();refresh();}});
+  savePrefs.addEventListener('click',()=>{const b=selectedBody();if(!b)return;preferences[b.id]=settings(b.id);try{localStorage.setItem(PREF_KEY,JSON.stringify(preferences));artStatus.textContent='Compositie voor '+BODY_LABEL[b.id]+' lokaal bewaard (alleen instellingen).';}catch{artStatus.textContent='Instellingen konden niet blijvend worden opgeslagen.';}});
+  artInput.addEventListener('change',async()=>{const file=artInput.files?.[0],turn=++importSerial;artInput.value='';if(!file)return;try{if(file.size>2500000)throw Error('Illustratiepakket te groot.');await installArt(await file.text(),true,turn);}catch(e){if(turn===importSerial)artStatus.textContent=errorMessage(e);}});
+  removeArt.addEventListener('click',()=>{++importSerial;try{localStorage.removeItem(ART_KEY);}catch{}art.clear();populateArt();artStatus.textContent='Illustratiepakket verwijderd. Portretten en instellingen zijn niet gewijzigd.';});
   for(const node of [format,layout,accent,person])node.addEventListener('change',refresh);
   for(const node of [brand,message])node.addEventListener('input',refresh);
   logoInput.addEventListener('change',async()=>{
@@ -141,7 +185,8 @@ export function mountCollectibles(config:Config):{refresh:()=>void;clear:()=>voi
   }
   exportButtons.forEach((b,i)=>b.addEventListener('click',()=>void exportFile((['front','back','pdf','sheet'] as const)[i])));
   if(location.origin!=='http://127.0.0.1:8765'&&location.origin!=='http://localhost:8765'){root.hidden=true;return {refresh,clear};}
-  refresh();
+  updateControls();refresh();
+  try{preferences=loadPreferences(localStorage.getItem(PREF_KEY));const raw=localStorage.getItem(ART_KEY);if(raw)void installArt(raw,false,++importSerial).catch(e=>{artStatus.textContent=errorMessage(e);});}catch{artStatus.textContent='Lokale browseropslag niet beschikbaar. Importeer het pakket per sessie.';}
   void (async()=>{
     try{
       const info=await (await checked(await local('/api/local/status'))).json();

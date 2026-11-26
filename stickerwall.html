@@ -11,7 +11,7 @@
   <body>
     <header class="top">
       <div class="wordmark">STICKERWALL<span class="dot">.</span></div>
-      <div class="tag">PROEFATELIER <strong>0.9</strong></div>
+      <div class="tag">PROEFATELIER <strong>0.10</strong></div>
     </header>
     <main>
       <section class="intro">
@@ -199,6 +199,29 @@
               <label>Kaartformaat<select id="collectible-format"><option value="trading">63 × 88 mm · tradingcard</option><option value="postcard">100 × 150 mm · groot</option></select></label>
               <label>Ontwerp<select id="collectible-layout"><option value="atelier">Atelier</option><option value="club">Club</option><option value="archive">Archief</option></select></label>
               <label class="local-mask"><input type="checkbox" id="collectible-accent" /> Kleuraccent op dierenlichaam</label>
+            </div>
+            <div class="local-compare composition-lab">
+              <div class="step">04B / COMPOSITIELAB A + B</div>
+              <h3>Dezelfde animekop, acht dierenlichamen</h3>
+              <p>Importeer eenmalig het losse Stickerwall-illustratiepakket. Alleen de illustraties en compositiewaarden worden in deze browser bewaard; geen portretfoto’s. Kies daarna een portret uit de vaste testset.</p>
+              <label>Illustratiepakket <input id="composition-import" type="file" accept=".json,application/json" /></label>
+              <p class="status" id="composition-status" role="status">Importeer het illustratiepakket om A en B te vergelijken.</p>
+              <div class="collectible-fields">
+                <label>Dierenlichaam<select id="composition-body"><option value="">Bestaand lijf (0.9)</option></select></label>
+                <label>Achtergrondkleur<select id="composition-color"></select></label>
+                <label>Hoofdgrootte <output id="composition-scale-value">125</output><input id="composition-scale" type="range" min="75" max="180" step="5" value="125" /></label>
+                <label>Hoofd links / rechts <output id="composition-x-value">0</output><input id="composition-x" type="range" min="-70" max="70" value="0" /></label>
+                <label>Hoofd hoger / lager <output id="composition-y-value">0</output><input id="composition-y" type="range" min="-70" max="70" value="0" /></label>
+                <label>Scheefstand <output id="composition-rotation-value">0</output><input id="composition-rotation" type="range" min="-20" max="20" value="0" /></label>
+                <label class="local-mask"><input id="composition-tentacle" type="checkbox" /> Tentakel vóór hoofd (B-octopus)</label>
+              </div>
+              <div class="actions">
+                <button class="button light" id="composition-reset" type="button">Herstel compositie</button>
+                <button class="button dark" id="composition-save" type="button">Bewaar per dier/stijl</button>
+                <button class="button light" id="composition-remove" type="button">Verwijder illustratiepakket</button>
+              </div>
+              <p class="helper">De gekozen verhoudingen worden samen passend gemaakt binnen het illustratievak. Bewaren slaat alleen getallen en een kleurkeuze op, niet het hoofd.</p>
+              <div class="collectible-designs composition-designs" id="composition-designs"></div>
             </div>
             <div class="collectible-pair">
               <div><h3>Voorzijde</h3><canvas id="collectible-front" width="315" height="440" aria-label="Voorzijde kaart"></canvas></div>

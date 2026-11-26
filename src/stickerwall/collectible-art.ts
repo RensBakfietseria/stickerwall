@@ -1,4 +1,5 @@
 import { drawCardAnimal } from './artwork.ts';
+import {compositionGeometry,illustratedName,DEFAULT_COMPOSITION,type BodyAsset,type Composition} from './composition.ts';
 import { creatureName, type Creature, type Quality } from './model.ts';
 
 export const FORMATS = { trading: [63,88], postcard: [100,150] } as const;
@@ -7,7 +8,7 @@ export const LAYOUTS = ['atelier','club','archive'] as const;
 export type Layout = typeof LAYOUTS[number];
 export const LAYOUT_NAMES: Record<Layout,string> = {atelier:'Atelier · klassieke prent',club:'Club · grafisch & speels',archive:'Archief · karakterstudie'};
 export type Portrait = {image: CanvasImageSource; width:number; height:number; anchor:{x:number;y:number;faceHeight:number}};
-export type Design = {format:Format;layout:Layout;accent:boolean;creature:Creature;qualities:readonly Quality[];portrait:Portrait};
+export type Design = {format:Format;layout:Layout;accent:boolean;creature:Creature;qualities:readonly Quality[];portrait:Portrait;body?:BodyAsset;composition?:Composition};
 export type Back = {brand:string;message:string;logo:CanvasImageSource|null;logoWidth:number;logoHeight:number};
 const INK='#24231f';
 const palettes={
@@ -63,6 +64,22 @@ function cutout(p:Portrait):HTMLCanvasElement{
   ctx.drawImage(p.image,8,8,p.width,p.height);return c;
 }
 function character(c:CanvasRenderingContext2D,d:Design,x:number,y:number,w:number,h:number){
+  if(d.body){
+    const body=d.body,settings=d.composition??DEFAULT_COMPOSITION,p=d.portrait,cut=cutout(p);
+    const geo=compositionGeometry(body,p,settings),fitScale=Math.min((w-22)/(geo.right-geo.left),(h-22)/(geo.bottom-geo.top));
+    c.save();
+    c.translate(x+w/2-(geo.left+geo.right)*fitScale/2,y+h/2-(geo.top+geo.bottom)*fitScale/2);
+    c.scale(fitScale,fitScale);
+    // White paper is kept opaque; optional body tint affects the white areas only.
+    if(d.accent){
+      const tint=canvas(body.width,body.height),g=tint.getContext('2d')!;
+      g.drawImage(body.image,0,0);g.globalCompositeOperation='multiply';g.fillStyle=palettes[d.layout].body;g.fillRect(0,0,tint.width,tint.height);g.globalCompositeOperation='destination-in';g.drawImage(body.image,0,0);
+      c.drawImage(tint,0,0,geo.bw,geo.bh);
+    }else c.drawImage(body.image,0,0,geo.bw,geo.bh);
+    c.save();c.translate(geo.ax,geo.ay);c.rotate(geo.angle);c.drawImage(cut,geo.dx,geo.dy,cut.width*geo.hs,cut.height*geo.hs);c.restore();
+    if(settings.tentacle&&body.front)c.drawImage(body.front,0,0,geo.bw,geo.bh);
+    c.restore();return;
+  }
   const scale=Math.min(w/465,h/545);
   c.save();
   c.translate(x+w/2-276*scale,y+h/2-375*scale);
@@ -86,14 +103,15 @@ function qualities(c:CanvasRenderingContext2D,q:readonly Quality[],y:number,acce
   values.forEach((v,i)=>{const x=45+i*(w+gap);c.fillStyle='#fffdf7';c.fillRect(x,y,w,42);ring(c,x,y,w,42,accent,1.4);fit(c,v,x+w/2,y+27,w-12,21,INK,'Arial','bold');});
 }
 export function renderFront(d:Design,preview=false):HTMLCanvasElement{
-  const {c,ctx:g,H}=base(d.format,preview),p=palettes[d.layout],name=creatureName(d.creature,d.qualities);
+  const {c,ctx:g,H}=base(d.format,preview),p=palettes[d.layout],name=d.body?illustratedName(d.body.id,d.qualities):creatureName(d.creature,d.qualities);
+  const background=d.body&&d.composition?.background?d.composition.background:p.soft;
   g.fillStyle=p.paper;g.fillRect(0,0,630,H);
   if(d.layout==='atelier'){
     ring(g,24,24,582,H-48,p.accent,3);ring(g,36,36,558,H-72,p.accent,1);
     text(g,'S T I C K Y   W A L L',315,77,24,p.accent,'Arial','bold');
     text(g,'EEN BIJZONDER BEEST',315,112,17,p.accent,'Arial');
     star(g,70,100,14,p.accent);star(g,560,100,14,p.accent);
-    g.fillStyle=p.soft;g.beginPath();g.ellipse(315,373,233,251,0,0,Math.PI*2);g.fill();
+    g.fillStyle=background;g.beginPath();g.ellipse(315,373,233,251,0,0,Math.PI*2);g.fill();
     character(g,d,58,125,514,H-350);
     line(g,60,H-228,570,H-228,p.accent);
     title(g,name,H-162,514,36);
@@ -102,7 +120,7 @@ export function renderFront(d:Design,preview=false):HTMLCanvasElement{
     g.fillStyle=p.accent;g.fillRect(25,25,580,164);
     text(g,'STICKY WALL / COLLECTIBLES',315,65,21,'#fff9e8','Arial','bold');
     title(g,name,124,515,33,'#fff9e8');
-    g.fillStyle=p.soft;g.fillRect(25,200,580,H-367);
+    g.fillStyle=background;g.fillRect(25,200,580,H-367);
     // graphic stripes and sparks are deliberately separate from the collage.
     for(let i=0;i<5;i++){line(g,41,227+i*15,117,227+i*15,p.accent,3);}
     star(g,542,263,25,p.accent);star(g,87,H-228,19,p.accent);
@@ -114,7 +132,7 @@ export function renderFront(d:Design,preview=false):HTMLCanvasElement{
     text(g,'S T I C K Y   W A L L',49,70,21,p.accent,'Arial','bold','left');
     text(g,'KARAKTERARCHIEF',581,70,16,p.accent,'Arial','normal','right');
     line(g,49,89,581,89,p.accent);
-    g.fillStyle=p.soft;g.beginPath();g.arc(315,350,230,0,Math.PI*2);g.fill();
+    g.fillStyle=background;g.beginPath();g.arc(315,350,230,0,Math.PI*2);g.fill();
     g.setLineDash([4,8]);g.strokeStyle=p.accent;g.lineWidth=2;g.beginPath();g.arc(315,350,247,0,Math.PI*2);g.stroke();g.setLineDash([]);
     character(g,d,57,105,516,H-344);
     line(g,49,H-231,581,H-231,p.accent);
