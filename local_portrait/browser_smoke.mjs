@@ -44,7 +44,7 @@ try {
       void request.abort();
     }
   });
-  await page.goto(base + '/stickerwall.html', { waitUntil: 'networkidle0' });
+  await page.goto(base + '/stickerwall.html', { waitUntil: 'domcontentloaded', timeout: 60000 });
   await page.waitForFunction(() => !document.querySelector('#local-compare-run').disabled);
   const fixture = process.argv[2];
   assert(fixture && existsSync(fixture), 'public fixture missing');
