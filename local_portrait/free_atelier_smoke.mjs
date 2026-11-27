@@ -86,7 +86,7 @@ try{
   const bodyId=a.id;
   await page.click('[data-instance="'+bodyId+'"]');
   await page.keyboard.down('Control');await page.click('[data-instance="portrait-head"]');await page.keyboard.up('Control');
-  assert.equal(await page.$eval('#free-layer-list [aria-pressed=true]',e=>e.length),2);
+  assert.equal(await page.$$eval('#free-layer-list [aria-pressed=true]',e=>e.length),2);
   await page.$eval('#free-canvas',c=>c.scrollIntoView({block:'center'}));
   await pointer(await pos(270,350),await pos(288,362));
   await page.click('#free-save');
@@ -98,12 +98,12 @@ try{
   await page.click('[data-instance="'+bodyId+'"]');
   await page.keyboard.down('Control');await page.click('[data-instance="portrait-head"]');await page.keyboard.up('Control');
   await ctrl('c');await ctrl('v');assert.equal(await layerCount(),3);
-  assert.equal(await page.$eval('[data-instance="portrait-head"]',e=>e.length),1);
-  assert.equal(await page.$eval('#free-layer-list [aria-pressed=true]',e=>e.length),1);
+  assert.equal(await page.$$eval('[data-instance="portrait-head"]',e=>e.length),1);
+  assert.equal(await page.$$eval('#free-layer-list [aria-pressed=true]',e=>e.length),1);
   // Canvas Ctrl-click a second object (head), remove both, undo; then undo paste.
   await page.$eval('#free-canvas',c=>c.scrollIntoView({block:'center'}));
   const hp=await pos(250,180);await page.keyboard.down('Control');await page.mouse.click(hp.x,hp.y);await page.keyboard.up('Control');
-  assert.equal(await page.$eval('#free-layer-list [aria-pressed=true]',e=>e.length),2);
+  assert.equal(await page.$$eval('#free-layer-list [aria-pressed=true]',e=>e.length),2);
   await page.keyboard.press('Backspace');assert.equal(await layerCount(),1);
   await ctrl('z');assert.equal(await layerCount(),3);await ctrl('z');assert.equal(await layerCount(),2);
   // Import corrected revision with unchanged IDs and persist existing composition.
