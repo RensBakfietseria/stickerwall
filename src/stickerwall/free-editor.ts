@@ -31,7 +31,7 @@ async function verifiedAssets(raw:string):Promise<Map<string,Asset>>{
   if(raw.length>12_000_000)throw Error('Illustratiepakket te groot.');
   const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(raw));
   const hash=Array.from(new Uint8Array(digest),n=>n.toString(16).padStart(2,'0')).join('');
-  if(hash!==PACK_HASH)throw Error('Gebruik het originele afgeleide sprint-1-pakket (geen eigen foto's).');
+  if(hash!==PACK_HASH)throw Error("Gebruik het originele afgeleide sprint-1-pakket (geen eigen foto’s).");
   const pieces=parsePack(raw);
   const loaded=await Promise.all(pieces.map(async a=>{
     const image=new Image();image.src=a.png;await image.decode();
