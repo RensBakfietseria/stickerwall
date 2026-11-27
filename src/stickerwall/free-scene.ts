@@ -10,7 +10,8 @@ export type Item={id:string;assetId:string;x:number;y:number;w:number;h:number;r
 export type Scene={version:1;title:string;items:Item[]};
 export type Frame={x:number;y:number;w:number;h:number};
 export const HEAD='portrait-head', SIZE=500;
-export const PACK_HASH='a4cc91a77beceb9bb0918f9ee92659b245797005112ad0e16ac4aed70be346d7';
+export const LEGACY_PACK_HASH='a4cc91a77beceb9bb0918f9ee92659b245797005112ad0e16ac4aed70be346d7';
+export const PACK_HASH='3f5d14b6968569b1131270874a82de03dd92e70ab315b75401e0b0aae2030d80';
 const assetPattern=/^0[1-8]-[a-z0-9-]+$/;
 const instancePattern=/^[a-zA-Z0-9_-]{1,80}$/;
 const num=(v:unknown,min:number,max:number)=>{if(typeof v!=='number'||!Number.isFinite(v)||v<min||v>max)throw Error('Ongeldige compositiecoördinaten.');return v;};
@@ -32,7 +33,7 @@ export function cleanScene(raw:unknown):Scene{
 export function parsePack(raw:string):Piece[]{
   if(raw.length>12_000_000)throw Error('Illustratiepakket te groot.');
   const p=JSON.parse(raw);
-  if(p?.version!==1||!Array.isArray(p.assets)||p.assets.length!==92)throw Error('Verwacht sprint 1 met 92 illustraties.');
+  if((p?.version!==1&&p?.version!==2)||!Array.isArray(p.assets)||p.assets.length!==92)throw Error('Verwacht sprint 1 met 92 illustraties.');
   const counts=[12,18,19,24,6,4,5,4], seen=new Set<string>();
   const result:Piece[]=p.assets.map((a:Piece)=>{
     const i=CATEGORIES.findIndex(([c])=>c===a?.category);
@@ -94,4 +95,26 @@ export function drawScene(c:CanvasRenderingContext2D,scene:Scene,assets:Map<stri
     c.restore();
   }
   c.restore();
+}
+
+/** Move a selection with a shared clamped translation, preserving relative geometry. */
+export function moveItems(items:Item[],ids:ReadonlySet<string>,dx:number,dy:number):Item[]{
+  const targets=items.filter(i=>ids.has(i.id));if(!targets.length)return items;
+  dx=Math.min(3000-Math.max(...targets.map(i=>i.x)),Math.max(-2500-Math.min(...targets.map(i=>i.x)),dx));
+  dy=Math.min(3000-Math.max(...targets.map(i=>i.y)),Math.max(-2500-Math.min(...targets.map(i=>i.y)),dy));
+  return items.map(i=>ids.has(i.id)?{...i,x:i.x+dx,y:i.y+dy}:i);
+}
+export function copyItems(items:Item[],offset:number,uid:()=>string):Item[]{
+  const copies=items.filter(i=>i.assetId!==HEAD).map(i=>({id:uid(),assetId:i.assetId,x:i.x,y:i.y,w:i.w,h:i.h,rotation:i.rotation,flip:i.flip}));
+  return moveItems(copies,new Set(copies.map(i=>i.id)),offset,offset);
+}
+export function reorderItems(items:Item[],ids:ReadonlySet<string>,where:'front'|'back'|'up'|'down'):Item[]{
+  if(where==='front'||where==='back'){
+    const selected=items.filter(i=>ids.has(i.id)),others=items.filter(i=>!ids.has(i.id));
+    return where==='front'?[...others,...selected]:[...selected,...others];
+  }
+  const next=[...items];
+  if(where==='up'){for(let i=next.length-2;i>=0;i--)if(ids.has(next[i].id)&&!ids.has(next[i+1].id))[next[i],next[i+1]]=[next[i+1],next[i]];}
+  else{for(let i=1;i<next.length;i++)if(ids.has(next[i].id)&&!ids.has(next[i-1].id))[next[i],next[i-1]]=[next[i-1],next[i]];}
+  return next;
 }

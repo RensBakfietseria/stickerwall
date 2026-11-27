@@ -5,6 +5,7 @@ on:
     branches:
       - stickerwall-0-11-fantasy
       - stickerwall-0-12-atelier
+      - stickerwall-0-12-1
   pull_request:
     paths:
       - 'local_portrait/**'
@@ -33,7 +34,7 @@ jobs:
       - run: npm ci
       - run: npm run stickerwall:build
       - run: npm run typecheck
-      - run: npx vitest run test/stickerwall.test.ts test/stickerwall-ink.test.ts test/stickerwall-u2-finish.test.ts test/stickerwall-u2-adaptive.test.ts test/stickerwall-collectible.test.ts test/stickerwall-composition.test.ts test/stickerwall-fantasy.test.ts test/stickerwall-free-scene.test.ts
+      - run: npx vitest run test/stickerwall.test.ts test/stickerwall-ink.test.ts test/stickerwall-u2-finish.test.ts test/stickerwall-u2-adaptive.test.ts test/stickerwall-collectible.test.ts test/stickerwall-composition.test.ts test/stickerwall-fantasy.test.ts test/stickerwall-free-scene.test.ts test/stickerwall-multiselect.test.ts
 
   engine-smoke:
     runs-on: windows-latest

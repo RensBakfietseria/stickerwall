@@ -82,6 +82,39 @@ try{
   assert(Math.abs(a.x-270)<3&&Math.abs(a.y-350)<3,'pointer move');
   assert(a.w>255&&a.w<300,'corner scale');assert(Math.abs(a.rotation-90)<5,'rotation handle');assert.equal(a.flip,true);
   assert.deepEqual(Object.keys(a).sort(),['assetId','flip','h','id','rotation','w','x','y']);
+  // Multi-selection including head, group move, copy and paste without the portrait.
+  const bodyId=a.id;
+  await page.click('[data-instance="'+bodyId+'"]');
+  await page.keyboard.down('Control');await page.click('[data-instance="portrait-head"]');await page.keyboard.up('Control');
+  assert.equal(await page.$eval('#free-layer-list [aria-pressed=true]',e=>e.length),2);
+  await page.$eval('#free-canvas',c=>c.scrollIntoView({block:'center'}));
+  await pointer(await pos(270,350),await pos(288,362));
+  await page.click('#free-save');
+  const moved=await page.evaluate(()=>JSON.parse(localStorage.getItem('stickerwall-free-designs-v1'))[0].scene);
+  assert(Math.abs(moved.items.find(i=>i.id===bodyId).x-a.x-18)<3);
+  assert(Math.abs(moved.items.find(i=>i.id==='portrait-head').x-s.items.find(i=>i.id==='portrait-head').x-18)<3);
+  await page.$eval('#free-canvas',c=>c.focus());await ctrl('z'); // revert movement, save did not create an undo step
+  await page.click('#free-save');
+  await page.click('[data-instance="'+bodyId+'"]');
+  await page.keyboard.down('Control');await page.click('[data-instance="portrait-head"]');await page.keyboard.up('Control');
+  await ctrl('c');await ctrl('v');assert.equal(await layerCount(),3);
+  assert.equal(await page.$eval('[data-instance="portrait-head"]',e=>e.length),1);
+  assert.equal(await page.$eval('#free-layer-list [aria-pressed=true]',e=>e.length),1);
+  // Canvas Ctrl-click a second object (head), remove both, undo; then undo paste.
+  await page.$eval('#free-canvas',c=>c.scrollIntoView({block:'center'}));
+  const hp=await pos(250,180);await page.keyboard.down('Control');await page.mouse.click(hp.x,hp.y);await page.keyboard.up('Control');
+  assert.equal(await page.$eval('#free-layer-list [aria-pressed=true]',e=>e.length),2);
+  await page.keyboard.press('Backspace');assert.equal(await layerCount(),1);
+  await ctrl('z');assert.equal(await layerCount(),3);await ctrl('z');assert.equal(await layerCount(),2);
+  // Import corrected revision with unchanged IDs and persist existing composition.
+  const corrected=JSON.stringify({...JSON.parse(raw),version:2});
+  const correctedDigest=createHash('sha256').update(corrected).digest('hex');
+  await page.evaluate((digest,expected)=>{const original=crypto.subtle.digest.bind(crypto.subtle);crypto.subtle.digest=async(...args)=>{const result=await original(...args);const hex=Array.from(new Uint8Array(result),n=>n.toString(16).padStart(2,'0')).join('');return hex===digest?Uint8Array.from(expected.match(/../g),s=>parseInt(s,16)).buffer:result;};},correctedDigest,'3f5d14b6968569b1131270874a82de03dd92e70ab315b75401e0b0aae2030d80');
+  await page.evaluateOnNewDocument((digest,expected)=>{const original=crypto.subtle.digest.bind(crypto.subtle);crypto.subtle.digest=async(...args)=>{const result=await original(...args);const hex=Array.from(new Uint8Array(result),n=>n.toString(16).padStart(2,'0')).join('');return hex===digest?Uint8Array.from(expected.match(/../g),s=>parseInt(s,16)).buffer:result;};},correctedDigest,'3f5d14b6968569b1131270874a82de03dd92e70ab315b75401e0b0aae2030d80');
+  const correctedPath=join(out,'corrected.json');writeFileSync(correctedPath,corrected);
+  await (await page.$('#free-pack')).uploadFile(correctedPath);
+  await page.waitForFunction(()=>document.querySelector('#free-pack-status').textContent.includes('lokaal bewaard')&&document.querySelector('#free-pack-status').textContent.includes('gecorrigeerd'));
+  await page.click('#free-save');
   // Browser persistence; same scene is reapplied to a real public fixture.
   await page.reload({waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>document.querySelectorAll('[data-asset]').length===92);
