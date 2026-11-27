@@ -178,3 +178,5 @@ footer{max-width:1280px;padding:22px 34px;margin:0 auto;border-top:1px solid #d6
 #free-pack-status,#free-status{font-size:11px;overflow-wrap:anywhere}
 @media(max-width:850px){.free-grid{grid-template-columns:1fr 2fr}.free-layers{grid-column:1/-1}.free-library{max-height:580px}}
 @media(max-width:560px){.free-grid{grid-template-columns:1fr}.free-work{grid-row:1}.free-library{max-height:340px}}
+
+#back-settings > canvas{display:block;width:100%;max-width:390px;height:auto;margin:0 auto;background:white}

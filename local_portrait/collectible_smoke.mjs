@@ -21,6 +21,7 @@ try{
   await page.setRequestInterception(true);
   page.on('request',r=>{if(r.url().startsWith(base+'/')||r.url().startsWith('data:')||r.url().startsWith('blob:'))void r.continue();else{external.push(r.url());void r.abort();}});
   await page.goto(base+'/stickerwall.html',{waitUntil:'domcontentloaded',timeout:60000});
+   await page.waitForSelector('#legacy-mode');await page.click('#legacy-mode');
   assert(await page.evaluate(()=>['testset-settings','thermal-settings','compare-bodies','compare-layouts','compare-profiles','print-exports','back-settings'].every(id=>!document.getElementById(id).open)));
   await page.waitForFunction(()=>!document.querySelector('#cartoon-current').disabled&&!document.querySelector('#collectible-current').disabled);
   await page.evaluate(()=>document.getElementById('testset-settings').open=true);

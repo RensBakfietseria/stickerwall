@@ -171,7 +171,7 @@ def main():
         raise SystemExit("Build ontbreekt: voer eerst npm run stickerwall:build uit.")
     server = ThreadingHTTPServer((HOST, PORT), Handler)
     print(f"Sticky Wall lokaal: http://{HOST}:{PORT}/stickerwall.html")
-    print("Collectibles 0.9: kleurkaarten, vaste lokale testset. Geen cloud-API.")
+    print("Sticky Wall 0.12: lokaal fantasiebeestenatelier. Geen cloud-API.")
     try:
         server.serve_forever()
     except KeyboardInterrupt:

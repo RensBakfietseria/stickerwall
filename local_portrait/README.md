@@ -1,4 +1,12 @@
-# Stickerwall 0.11 — Fantasiebeestenlab
+# Stickerwall 0.12 — Vrij fantasiebeestenatelier
+
+## Build 0.12 (ontwikkelbranch)
+
+Het vrije atelier staat centraal. Eenmalig laad je het afgeleide `stickerwall-illustratiepakket-0.12.json` (92 PNG's) via Illustratiepakket laden. Dit pakket blijft lokaal in IndexedDB; het kan ook als gelijknamig statisch bestand in `public/` worden geplaatst vóór de build. De SHA-256 wordt gecontroleerd: gebruik het aangeleverde pakket, geen eigen portretfoto's. De oorspronkelijke ZIP blijft de artistieke bron. Bij wissen van browsergegevens moet het pakket opnieuw worden geladen.
+
+Sleep illustraties naar de kaart of klik op een thumbnail. Klik om een onderdeel te selecteren; sleep, gebruik de hoekgrepen om te schalen of de ronde greep om te draaien. Backspace/Delete verwijdert, Ctrl+D dupliceert, Ctrl+Z/Ctrl+Y herstelt. De lagenlijst geeft toegang tot verborgen onderdelen; Hele wezen schakelt groepsverplaatsing en -schaling in. Het portret is een apart onderdeel, ook zonder geladen foto. Bewaar ontwerpen met een niet-persoonlijke naam; de opslag en JSON-export bevatten alleen ontwerpgeometrie, nooit foto's. Kies een ander portret zonder de geometrie te wijzigen. PNG/PDF/A4 gebruiken dezelfde renderer, zonder selectiekaders. De oorspronkelijke A/B/A+-editor is beschikbaar via Referentieatelier.
+
+De echte illustraties worden niet door GitHub gedistribueerd in deze ontwikkelversie; het JSON-pakket wordt afzonderlijk aangeleverd. De stabiele updater mag pas naar deze versie wijzen na technische acceptatie. Fysieke printkwaliteit, artistieke uitsneden en lokale gebruikersacceptatie blijven open.
 
 Vijf tekenvarianten: Contour, Contour+ (BiSeNet + Contour), U²-Net Portrait (met BiSeNet), OpenSketch en Anime. Alle verwerking lokaal op CPU. Geen G'MIC of PyTorch. APDrawingGAN++ blijft onderzocht, niet actief.
 

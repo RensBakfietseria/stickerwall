@@ -1,5 +1,6 @@
 import {FORMATS,LAYOUTS,LAYOUT_NAMES,renderFront,renderBack,type Design,type Format,type Layout,type Portrait,type Back} from './collectible-art.ts';
 import {canvasPng,download,makePdf,printSheet} from './collectible-print.ts';
+import {mountFreeEditor,type FreeEditor} from './free-editor.ts';
 import {makePortraitInput,type Crop} from './portrait.ts';
 import type {Creature,Quality} from './model.ts';
 import {BODY_IDS,BODY_LABEL,PALETTES,ART_KEY,PREF_KEY,DEFAULT_COMPOSITION,normalizeComposition,loadPreferences,loadPack,type BodyId,type BodyAsset,type Composition} from './composition.ts';
@@ -36,6 +37,8 @@ export function mountCollectibles(config:Config):{refresh:()=>void;clear:()=>voi
   const partInputs=[partScale,partX,partY,partRotation];
   let accessories=new Map<AccessoryId,Asset>(),partDrafts:Partial<Record<BodyId,Part[]>>={},savedParts:Partial<Record<BodyId,Part[]>>={};
   let art=new Map<BodyId,BodyAsset>(),preferences:Partial<Record<BodyId,Composition>>={},drafts:Partial<Record<BodyId,Composition>>={},importSerial=0,compositionFrame=0;
+  let editor:FreeEditor|undefined;
+  const placeholder:Entry={key:'placeholder',label:'Zonder portret',portrait:{image:document.createElement('canvas'),width:1,height:1,anchor:{x:.5,y:.8,faceHeight:.6}}};
   let entries:Entry[]=[],logo:ImageBitmap|null=null,ready=false,busy=false,exporting=false,serial=0,logoSerial=0,controller:AbortController|null=null;
   function show(s:string){status.textContent=s;}
   function selected(){return entries.find(e=>e.key===person.value)??entries[0];}
@@ -72,7 +75,11 @@ export function mountCollectibles(config:Config):{refresh:()=>void;clear:()=>voi
     for(const input of partInputs)el<HTMLOutputElement>(input.id+'-value').value=input.value;
     cancelAnimationFrame(compositionFrame);compositionFrame=requestAnimationFrame(refresh);
   }
-  function design(entry:Entry,l=layout.value as Layout,a=accent.checked,b=selectedBody()):Design{return {format:format.value as Format,layout:l,accent:a,creature:config.getCreature(),qualities:config.getQualities(),portrait:entry.portrait,body:b,composition:b?settings(b.id):undefined,parts:b?parts(b.id):[],accessories};}
+  function legacyDesign(entry:Entry,l=layout.value as Layout,a=accent.checked,b=selectedBody()):Design{return {format:format.value as Format,layout:l,accent:a,creature:config.getCreature(),qualities:config.getQualities(),portrait:entry.portrait,body:b,composition:b?settings(b.id):undefined,parts:b?parts(b.id):[],accessories};}
+  function design(entry:Entry,l=layout.value as Layout,a=accent.checked):Design{
+    const base=legacyDesign(entry,l,a);if(!editor?.active)return base;
+    return {...base,body:undefined,composition:undefined,parts:undefined,accessories:undefined,free:{scene:editor.scene,assets:editor.assets,hasPortrait:entry!==placeholder}};
+  }
   function updateControls(){
     const b=selectedBody(),v=b?settings(b.id):DEFAULT_COMPOSITION;
     scale.value=String(v.scale);x.value=String(v.x);y.value=String(v.y);rotation.value=String(v.rotation);background.value=v.background;tentacle.checked=v.tentacle;
@@ -101,7 +108,7 @@ export function mountCollectibles(config:Config):{refresh:()=>void;clear:()=>voi
   function backData():Back{return {brand:brand.value,message:message.value,logo,logoWidth:logo?.width??0,logoHeight:logo?.height??0};}
   function sync(){
     batch.disabled=!ready||busy||exporting;current.disabled=!ready||busy||exporting;
-    exportButtons.forEach(b=>b.disabled=!selected()||busy||exporting);
+    exportButtons.forEach(b=>b.disabled=!selected()||busy||exporting||!!(editor?.active&&!editor.complete));
     clearLogo.disabled=!logo;clearButton.disabled=!entries.length&&!busy;
   }
   function thumbnail(grid:HTMLElement,c:HTMLCanvasElement,label:string,action?:()=>void){
@@ -114,18 +121,18 @@ export function mountCollectibles(config:Config):{refresh:()=>void;clear:()=>voi
   }
   function refresh(){
     const entry=selected(),f=format.value as Format,l=layout.value as Layout;
-    paint(back,renderBack(f,l,backData(),true));
+    paint(back,renderBack(f,l,backData(),true));editor?.refresh();
     comparisons.replaceChildren();profiles.replaceChildren();bodyGrid.replaceChildren();
     el<HTMLElement>('collectible-empty').hidden=!!entry;
     if(!entry){front.width=315;front.height=440;front.getContext('2d')!.clearRect(0,0,315,440);sync();return;}
-    paint(front,renderFront(design(entry)));
+    if(!editor?.active)paint(front,renderFront(legacyDesign(entry)));
     if(compareLayouts.open)for(const style of LAYOUTS)for(const colored of [false,true]){
       thumbnail(comparisons,renderFront(design(entry,style,colored),true),LAYOUT_NAMES[style]+' · '+(colored?'kleuraccent':'zwart-wit lijf'),()=>{
         layout.value=style;accent.checked=colored;refresh();
       });
     }
     if(compareBodies.open)for(const id of BODY_IDS){
-      const b=art.get(id);if(b)thumbnail(bodyGrid,renderFront(design(entry,l,accent.checked,b),true),BODY_LABEL[id],()=>selectBody(id));
+      const b=art.get(id);if(b)thumbnail(bodyGrid,renderFront(legacyDesign(entry,l,accent.checked,b),true),BODY_LABEL[id],()=>selectBody(id));
     }
     if(compareProfiles.open)for(const e of entries)thumbnail(profiles,renderFront(design(e),true),e.label,()=>{person.value=e.key;refresh();});
     sync();
@@ -213,7 +220,7 @@ export function mountCollectibles(config:Config):{refresh:()=>void;clear:()=>voi
   // Clearing or replacing a saved portrait invalidates its generated cards.
   window.addEventListener('stickerwall-testset-change',clear);
   async function exportFile(kind:'front'|'back'|'pdf'|'sheet'){
-    const entry=selected();if(!entry||busy||exporting)return;
+    const entry=selected();if(!entry||busy||exporting||(editor?.active&&!editor.complete))return;
     exporting=true;sync();const turn=serial;
     try{
       // Snapshot current selections before any asynchronous conversion.
@@ -238,6 +245,11 @@ export function mountCollectibles(config:Config):{refresh:()=>void;clear:()=>voi
   }
   exportButtons.forEach((b,i)=>b.addEventListener('click',()=>void exportFile((['front','back','pdf','sheet'] as const)[i])));
   if(location.origin!=='http://127.0.0.1:8765'&&location.origin!=='http://localhost:8765'){root.hidden=true;return {refresh,clear};}
+  const legacy=root.querySelector<HTMLElement>('.studio-editor')!;
+  const fields=legacy.querySelector<HTMLElement>('.studio-controls > .collectible-fields')!;
+  root.insertBefore(fields,legacy);
+  root.insertBefore(el<HTMLElement>('back-settings'),compareBodies);
+  editor=mountFreeEditor(root,legacy,refresh,()=>renderFront(design(selected()??placeholder)),()=>({format:format.value as Format,layout:layout.value as Layout}));
   updateControls();refresh();
   const artTurn=++importSerial;
   void (async()=>{

@@ -1,4 +1,5 @@
 import { drawCardAnimal } from './artwork.ts';
+import {drawScene,type Scene,type Asset as FreeAsset} from './free-scene.ts';
 import {placeParts,type Part,type Asset,type AccessoryId,type Placed} from './fantasy.ts';
 import {compositionGeometry,illustratedName,DEFAULT_COMPOSITION,type BodyAsset,type Composition} from './composition.ts';
 import { creatureName, type Creature, type Quality } from './model.ts';
@@ -9,7 +10,7 @@ export const LAYOUTS = ['atelier','club','archive'] as const;
 export type Layout = typeof LAYOUTS[number];
 export const LAYOUT_NAMES: Record<Layout,string> = {atelier:'Atelier · klassieke prent',club:'Club · grafisch & speels',archive:'Archief · karakterstudie'};
 export type Portrait = {image: CanvasImageSource; width:number; height:number; anchor:{x:number;y:number;faceHeight:number}};
-export type Design = {format:Format;layout:Layout;accent:boolean;creature:Creature;qualities:readonly Quality[];portrait:Portrait;body?:BodyAsset;composition?:Composition;parts?:Part[];accessories?:Map<AccessoryId,Asset>};
+export type Design = {format:Format;layout:Layout;accent:boolean;creature:Creature;qualities:readonly Quality[];portrait:Portrait;body?:BodyAsset;composition?:Composition;parts?:Part[];accessories?:Map<AccessoryId,Asset>;free?:{scene:Scene;assets:Map<string,FreeAsset>;hasPortrait:boolean}};
 export type Back = {brand:string;message:string;logo:CanvasImageSource|null;logoWidth:number;logoHeight:number};
 const INK='#24231f';
 const palettes={
@@ -67,6 +68,7 @@ function cutout(p:Portrait):HTMLCanvasElement{
   ctx.drawImage(p.image,8,8,p.width,p.height);cutoutCache.set(p.image,c);return c;
 }
 function character(c:CanvasRenderingContext2D,d:Design,x:number,y:number,w:number,h:number){
+  if(d.free){const head=d.free.hasPortrait?cutout(d.portrait):null;drawScene(c,d.free.scene,d.free.assets,head,head?{width:head.width,height:head.height}:null,{x,y,w,h},!d.free.hasPortrait,d.accent?palettes[d.layout].body:undefined);return;}
   if(d.body){
     const body=d.body,settings=d.composition??DEFAULT_COMPOSITION,p=d.portrait,cut=cutout(p);
     const geo=compositionGeometry(body,p,settings);
@@ -113,7 +115,7 @@ function qualities(c:CanvasRenderingContext2D,q:readonly Quality[],y:number,acce
   values.forEach((v,i)=>{const x=45+i*(w+gap);c.fillStyle='#fffdf7';c.fillRect(x,y,w,42);ring(c,x,y,w,42,accent,1.4);fit(c,v,x+w/2,y+27,w-12,21,INK,'Arial','bold');});
 }
 export function renderFront(d:Design,preview=false):HTMLCanvasElement{
-  const {c,ctx:g,H}=base(d.format,preview),p=palettes[d.layout],name=d.body?illustratedName(d.body.id,d.qualities):creatureName(d.creature,d.qualities);
+  const {c,ctx:g,H}=base(d.format,preview),p=palettes[d.layout],name=d.free?(d.free.scene.title||'Een bijzonder beest'):d.body?illustratedName(d.body.id,d.qualities):creatureName(d.creature,d.qualities);
   const background=d.body&&d.composition?.background?d.composition.background:p.soft;
   g.fillStyle=p.paper;g.fillRect(0,0,630,H);
   if(d.layout==='atelier'){

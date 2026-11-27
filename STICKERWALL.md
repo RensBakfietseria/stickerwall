@@ -1,9 +1,3 @@
-# Stickerwall 0.11 — Fantasiebeestenlab
+# Stickerwall 0.12 — Vrij fantasiebeestenatelier
 
-Zie [bouwopdracht](BUILD_0_11.md). Eén kaart als hoofdwerkplaats, oude
-experimenten en vergelijkingen op verzoek. Negen nieuwe originele losse
-illustraties, drie lagen, onafhankelijke plaatsing per onderdeel en A+-proef.
-Behoud van acht A/B-lichamen, testset, lokale AI, naamgeving, printer en exports.
-Geen nieuwe modelgewichten of cloud.
-
-[Lokale instructies](local_portrait/README.md).
+Nieuwe editor voor vrije composities, met directe canvasbediening en lokale ontwerpbestanden. Build 0.11 blijft beschikbaar als referentieatelier. Zie [bouwdocumentatie](BUILD_0_12.md) en [lokale instructies](local_portrait/README.md).
