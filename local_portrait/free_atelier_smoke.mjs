@@ -68,10 +68,11 @@ try{
   await pointer(await pos(270,350-sizeH*1.2/2-25),await pos(270+sizeH*1.2/2+25,350));
   await page.click('#free-flip');
   await page.$eval('#free-canvas',e=>e.focus());
-  await page.keyboard.press('Control+d');assert.equal(await layerCount(),3);
+  async function ctrl(key){await page.keyboard.down('Control');try{await page.keyboard.press(key);}finally{await page.keyboard.up('Control');}}
+  await ctrl('d');assert.equal(await layerCount(),3);
   await page.keyboard.press('Backspace');assert.equal(await layerCount(),2);
-  await page.keyboard.press('Control+z');assert.equal(await layerCount(),3);
-  await page.keyboard.press('Control+y');assert.equal(await layerCount(),2);
+  await ctrl('z');assert.equal(await layerCount(),3);
+  await ctrl('y');assert.equal(await layerCount(),2);
   // Verify movement, rotation, scaling and flipping via explicit local save.
   await page.type('#free-title','Proefwezen');await page.click('#free-save');
   const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('stickerwall-free-designs-v1')));
