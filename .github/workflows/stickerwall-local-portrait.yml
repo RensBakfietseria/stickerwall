@@ -71,6 +71,9 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           & .\.local-portrait-venv\Scripts\python.exe -m pip install pypdf
           & .\.local-portrait-venv\Scripts\python.exe local_portrait\check_collectible_exports.py "$env:RUNNER_TEMP\collectible-exports"
+      - name: Free atelier browser gestures, storage and preview-export parity
+        shell: pwsh
+        run: node local_portrait/free_atelier_smoke.mjs "$env:RUNNER_TEMP\stickerwall-public-face.jpg"
       - name: Verify setup is reusable
         shell: pwsh
         run: powershell -ExecutionPolicy Bypass -File .\local_portrait\setup.ps1

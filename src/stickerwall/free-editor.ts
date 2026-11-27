@@ -84,7 +84,7 @@ export function mountFreeEditor(root:HTMLElement,legacy:HTMLElement,onChange:()=
     layers.replaceChildren();
     for(const i of [...scene.items].reverse()){
       const b=document.createElement('button');b.type='button';b.className='free-layer';b.textContent=label(i.assetId);b.setAttribute('aria-pressed',String(!group&&i.id===selected));b.dataset.instance=i.id;
-      b.addEventListener('click',()=>{group=false;selected=i.id;updateLayers();schedule();});layers.append(b);
+      b.addEventListener('click',()=>{group=false;selected=i.id;updateLayers();schedule();cv.focus();});layers.append(b);
     }
     const i=scene.items.find(i=>i.id===selected);
     for(const id of ['free-frontmost','free-forward','free-backward','free-backmost','free-delete','free-flip','free-duplicate'])btn(id).disabled=group||!i||((id==='free-flip'||id==='free-duplicate')&&i.assetId===HEAD);
@@ -190,18 +190,19 @@ export function mountFreeEditor(root:HTMLElement,legacy:HTMLElement,onChange:()=
   });
   title.onchange=()=>{if(title.value!==scene.title)commit({...scene,title:title.value.trim()});};
   function store(next:Stored[]){try{localStorage.setItem(SAVE_KEY,JSON.stringify(next));saved=next;updateSaved();return true;}catch{tell('Opslag mislukt. Exporteer het ontwerp als JSON.');return false;}}
+  function mayDiscard(){const baseline=saved.find(s=>s.id===currentId)?.scene??emptyScene();return JSON.stringify(scene)===JSON.stringify(baseline)||confirm('Niet-bewaarde wijzigingen verwerpen?');}
   function openScene(next:Scene,id:string|null){scene=clone(next);currentId=id;selected=null;group=false;undo=[];redo=[];title.value=scene.title;updateSaved();changed();}
-  btn('free-new').onclick=()=>{if(scene.items.length>1&&!confirm('Nieuw ontwerp starten? Bewaar wijzigingen eerst indien nodig.'))return;openScene(emptyScene(),null);tell('Nieuw ontwerp.');};
+  btn('free-new').onclick=()=>{if(!mayDiscard())return;openScene(emptyScene(),null);tell('Nieuw ontwerp.');};
   btn('free-save').onclick=()=>{const name=title.value.trim();if(!name){tell('Geef het ontwerp eerst een naam (geen persoonsgegevens).');title.focus();return;}
     if(!scene.items.every(i=>i.assetId===HEAD||assets.has(i.assetId))){tell('Laad eerst de ontbrekende illustraties.');return;}
     const next=cleanScene({...scene,title:name}),id=currentId??uid();if(!currentId&&saved.length>=200){tell('Bibliotheek vol. Exporteer of verwijder een ontwerp.');return;}
     if(store([...saved.filter(s=>s.id!==id),{id,scene:next}])){currentId=id;scene=next;updateSaved();changed();tell('Ontwerp lokaal bewaard, zonder portret.');}
   };
-  btn('free-open').onclick=()=>{const s=saved.find(s=>s.id===savedSelect.value);if(s){openScene(s.scene,s.id);tell('Ontwerp geopend.');}};
-  btn('free-copy-saved').onclick=()=>{const s=saved.find(s=>s.id===savedSelect.value);if(s){openScene({...s.scene,title:(s.scene.title+' kopie').slice(0,80)},null);tell('Kopie geopend; bewaar onder een eigen naam.');}};
+  btn('free-open').onclick=()=>{const s=saved.find(s=>s.id===savedSelect.value);if(s&&mayDiscard()){openScene(s.scene,s.id);tell('Ontwerp geopend.');}};
+  btn('free-copy-saved').onclick=()=>{const s=saved.find(s=>s.id===savedSelect.value);if(s&&mayDiscard()){openScene({...s.scene,title:(s.scene.title+' kopie').slice(0,80)},null);tell('Kopie geopend; bewaar onder een eigen naam.');}};
   btn('free-remove-saved').onclick=()=>{const id=savedSelect.value;if(id&&confirm('Dit bewaarde ontwerp verwijderen?')&&store(saved.filter(s=>s.id!==id))){if(currentId===id)currentId=null;updateSaved();tell('Bewaard ontwerp verwijderd.');}};
   btn('free-export').onclick=()=>{const s=cleanScene({...scene,title:title.value.trim()});download(new Blob([JSON.stringify(s,null,2)],{type:'application/json'}),'stickywall-ontwerp.json');};
-  const imp=$<HTMLInputElement>('free-import');imp.onchange=async()=>{const f=imp.files?.[0];imp.value='';if(!f)return;try{if(f.size>500_000)throw Error('Ontwerpbestand te groot.');const s=cleanScene(JSON.parse(await f.text()));if(assets.size&&s.items.some(i=>i.assetId!==HEAD&&!assets.has(i.assetId)))throw Error('Onbekende illustratie.');openScene(s,null);tell('Ontwerp geïmporteerd.');}catch(e){tell(String(e));}};
+  const imp=$<HTMLInputElement>('free-import');imp.onchange=async()=>{const f=imp.files?.[0];imp.value='';if(!f)return;try{if(f.size>500_000)throw Error('Ontwerpbestand te groot.');const s=cleanScene(JSON.parse(await f.text()));if(assets.size&&s.items.some(i=>i.assetId!==HEAD&&!assets.has(i.assetId)))throw Error('Onbekende illustratie.');if(mayDiscard()){openScene(s,null);tell('Ontwerp geïmporteerd.');}}catch(e){tell(String(e));}};
   updateSaved();updateLayers();schedule();
   return {get active(){return active;},get scene(){return scene;},get assets(){return assets;},get complete(){return scene.items.every(i=>i.assetId===HEAD||assets.has(i.assetId));},refresh:schedule};
 }

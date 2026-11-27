@@ -114,6 +114,7 @@ try{
   await page.waitForFunction(()=>document.querySelector('#collectible-pdf').disabled&&document.querySelectorAll('#collectible-designs canvas').length===0);
   for(const slot of slots.slice(1))await fetch(base+'/api/local/testset/'+slot,{method:'DELETE'});
   await page.reload({waitUntil:'domcontentloaded'});
+  await page.waitForSelector('#legacy-mode');await page.click('#legacy-mode');
   await page.waitForFunction(()=>document.querySelectorAll('#composition-body option').length===9);
   await page.select('#composition-body','A-octopus');
   await page.waitForFunction(()=>document.querySelector('#fantasy-active option[value=crown]'));
